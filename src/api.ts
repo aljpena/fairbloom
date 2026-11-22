@@ -31,7 +31,10 @@ export interface Pagination {
 
 export interface Transaction {
   _id: string;
-  submittedBy?: { _id: string; name: string; role: Role; email?: string } | string;
+  /** null once the submitting account was erased (transactions anonymized). */
+  submittedBy?: { _id: string; name: string; role: Role; email?: string } | string | null;
+  /** "deal" = accepted by both parties in chat; "manual" = an older one-sided report. */
+  source?: "deal" | "manual";
   farmer?: { _id: string; name: string } | string | null;
   buyer?: { _id: string; name: string } | string | null;
   flowerVariety: string;
@@ -39,6 +42,7 @@ export interface Transaction {
   volume: number;
   location?: string;
   flaggedForReview: boolean;
+  /** How far the price was from the 30-day index when it was recorded. */
   deviationPercent: number | null;
   status: TransactionStatus;
   createdAt: string;
@@ -53,9 +57,17 @@ export interface UserActivity {
   transactions: Record<string, number>;
 }
 
-export interface PageResult<T> {
-  items: T[];
-  pagination: Pagination;
+export interface AdminNotification {
+  _id: string;
+  /** e.g. "verification_pending", "transaction_flagged" */
+  type: string;
+  title: string;
+  body: string;
+  transaction?: string;
+  subject?: string;
+  count?: number;
+  isRead: boolean;
+  updatedAt: string;
 }
 
 export class ApiError extends Error {
@@ -110,14 +122,19 @@ async function request<T>(
 
   const payload: unknown = await response.json().catch(() => null);
   if (!response.ok) {
-    const message =
-      payload && typeof payload === "object" && "message" in payload && typeof payload.message === "string"
-        ? payload.message
-        : `Request failed (${response.status})`;
     if (response.status === 401 && token) expireSession();
-    throw new ApiError(message, response.status);
+    throw new ApiError(errorMessage(payload, `Request failed (${response.status})`), response.status);
   }
   return payload as T;
+}
+
+/** The backend sends `{ message }`, or `{ errors: [{ msg }] }` when request validation fails. */
+function errorMessage(payload: unknown, fallback: string) {
+  if (!payload || typeof payload !== "object") return fallback;
+  const body = payload as { message?: unknown; errors?: { msg?: unknown }[] };
+  if (typeof body.message === "string") return body.message;
+  const first = Array.isArray(body.errors) ? body.errors.find((e) => typeof e?.msg === "string") : undefined;
+  return typeof first?.msg === "string" ? first.msg : fallback;
 }
 
 export const adminApi = {
@@ -168,13 +185,14 @@ export const adminApi = {
       body: { decision, reason },
     }),
 
-  users: (filters: { search: string; role: string; status: string; page: number }) =>
+  users: (filters: { search: string; role: string; status: string; verified: string; page: number }) =>
     request<{ users: AdminUser[]; pagination: Pagination }>(
       `/admin/users${queryString({
         ...filters,
         search: filters.search || undefined,
         role: filters.role || undefined,
         status: filters.status || undefined,
+        verified: filters.verified || undefined,
         limit: 20,
       })}`,
     ),
@@ -182,11 +200,28 @@ export const adminApi = {
   user: (id: string) =>
     request<{ user: AdminUser; activity: UserActivity }>(`/admin/users/${id}`),
 
+  /** Deactivating also cancels the member's active listings and open deals (reported in `cleanup`). */
   setUserStatus: (id: string, isActive: boolean) =>
-    request<{ user: AdminUser; message: string }>(`/admin/users/${id}/status`, {
+    request<{
+      user: AdminUser;
+      message: string;
+      cleanup?: { listingsCancelled: number; openDealsCancelled: number };
+    }>(`/admin/users/${id}/status`, {
       method: "PATCH",
       body: { isActive },
     }),
+
+  notifications: () =>
+    request<{ notifications: AdminNotification[]; unreadCount: number; pagination: Pagination }>(
+      "/notifications?limit=20",
+    ),
+
+  unreadNotifications: () => request<{ unreadCount: number }>("/notifications/unread-count"),
+
+  markNotificationRead: (id: string) =>
+    request<{ notification: AdminNotification }>(`/notifications/${id}/read`, { method: "PATCH" }),
+
+  markAllNotificationsRead: () => request<{ updated: number }>("/notifications/read-all", { method: "PATCH" }),
 
   eraseUser: (id: string, confirmEmail: string, transactions: "anonymize" | "delete") =>
     request<{ message: string }>(`/admin/users/${id}/erase`, {
@@ -223,12 +258,8 @@ export const adminApi = {
     }
     if (!response.ok) {
       const payload: unknown = await response.json().catch(() => null);
-      const message =
-        payload && typeof payload === "object" && "message" in payload && typeof payload.message === "string"
-          ? payload.message
-          : `Backup failed (${response.status})`;
       if (response.status === 401 && token) expireSession();
-      throw new ApiError(message, response.status);
+      throw new ApiError(errorMessage(payload, `Backup failed (${response.status})`), response.status);
     }
 
     const blob = await response.blob();
@@ -250,9 +281,16 @@ export function formatNumber(value: number) {
   return new Intl.NumberFormat("en-PH", { maximumFractionDigits: 2 }).format(value);
 }
 
+const nameOf = (party: Transaction["farmer"]) => (party && typeof party === "object" ? party.name : null);
+
 export function submitterName(transaction: Transaction) {
   if (transaction.submittedBy && typeof transaction.submittedBy === "object") return transaction.submittedBy.name;
-  if (transaction.farmer && typeof transaction.farmer === "object") return transaction.farmer.name;
-  if (transaction.buyer && typeof transaction.buyer === "object") return transaction.buyer.name;
-  return "Unknown member";
+  return nameOf(transaction.farmer) ?? nameOf(transaction.buyer) ?? "Unknown member";
+}
+
+/** "Farmer → Buyer" for deal-based sales; null when either side was erased. */
+export function dealParties(transaction: Transaction) {
+  const farmer = nameOf(transaction.farmer);
+  const buyer = nameOf(transaction.buyer);
+  return farmer && buyer ? `${farmer} → ${buyer}` : null;
 }

@@ -1,11 +1,13 @@
-import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import {
   ArrowDownToLine,
   ArrowLeft,
   ArrowRight,
   BadgeCheck,
   Ban,
+  Bell,
   Check,
+  CheckCheck,
   ChevronDown,
   CircleDollarSign,
   Clock3,
@@ -32,7 +34,9 @@ import {
   formatCurrency,
   formatDate,
   formatNumber,
+  dealParties,
   submitterName,
+  type AdminNotification,
   type AdminUser,
   type Transaction,
   type TransactionStatus,
@@ -45,8 +49,8 @@ type Notice = { message: string; tone: "success" | "error" };
 
 const pageMeta: Record<Page, { label: string; description: string }> = {
   overview: { label: "Overview", description: "A clear view of what needs your attention." },
-  review: { label: "Sale review", description: "Review member-submitted sales before they enter the price index." },
-  history: { label: "Sale records", description: "Search and review all submitted and confirmed transactions." },
+  review: { label: "Sale review", description: "Review deal prices that were far from the market index before they count." },
+  history: { label: "Sale records", description: "Search every sale recorded from accepted deals." },
   verifications: { label: "Member verification", description: "Review farmer IDs and buyer business permits." },
   members: { label: "Members", description: "Find accounts and manage member access." },
 };
@@ -66,10 +70,14 @@ export default function App() {
   const [notice, setNotice] = useState<Notice | null>(null);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
+  const noticeTimer = useRef<number | undefined>(undefined);
   const notify = useCallback((message: string, tone: Notice["tone"] = "success") => {
+    // Restart the timer so an older notice's timeout can't hide a newer one early.
+    window.clearTimeout(noticeTimer.current);
     setNotice({ message, tone });
-    window.setTimeout(() => setNotice(null), 4200);
+    noticeTimer.current = window.setTimeout(() => setNotice(null), 4200);
   }, []);
+  useEffect(() => () => window.clearTimeout(noticeTimer.current), []);
 
   const signOut = useCallback(() => {
     authToken.clear();
@@ -160,6 +168,7 @@ export default function App() {
             <h1>{pageMeta[page].label}</h1>
           </div>
           <div className="topbar-user">
+            <NotificationBell onNavigate={(next) => { setPage(next); setMobileNavOpen(false); }} />
             <div className="user-avatar"><UserRound size={18} /></div>
             <div className="topbar-user-info">
               <strong>{user.name}</strong>
@@ -290,7 +299,132 @@ function Sidebar({
   );
 }
 
-function Overview({ onNavigate, notify }: { onNavigate: (page: Page) => void; notify: (message: string, tone?: Notice["tone"]) => void }) {
+/** Where an admin notification leads. The backend sends admins these two types (see utils/notify.js callers). */
+function notificationPage(item: AdminNotification): Page | null {
+  if (item.type === "verification_pending") return "verifications";
+  if (item.type === "transaction_flagged") return "review";
+  return null;
+}
+
+const UNREAD_POLL_MS = 60_000;
+
+function NotificationBell({ onNavigate }: { onNavigate: (page: Page) => void }) {
+  const [open, setOpen] = useState(false);
+  const [unread, setUnread] = useState(0);
+  const [items, setItems] = useState<AdminNotification[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  // Keep the badge current while the workspace is open.
+  useEffect(() => {
+    let active = true;
+    const refresh = () => {
+      adminApi.unreadNotifications()
+        .then(({ unreadCount }) => { if (active) setUnread(unreadCount); })
+        .catch(() => undefined);
+    };
+    refresh();
+    const timer = window.setInterval(refresh, UNREAD_POLL_MS);
+    return () => { active = false; window.clearInterval(timer); };
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    let active = true;
+    setLoading(true);
+    setError("");
+    adminApi.notifications()
+      .then((result) => {
+        if (!active) return;
+        setItems(result.notifications);
+        setUnread(result.unreadCount);
+      })
+      .catch((cause) => { if (active) setError(cause instanceof Error ? cause.message : "Could not load notifications."); })
+      .finally(() => { if (active) setLoading(false); });
+
+    const onPointer = (event: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(event.target as Node)) setOpen(false);
+    };
+    const onKey = (event: KeyboardEvent) => { if (event.key === "Escape") setOpen(false); };
+    document.addEventListener("mousedown", onPointer);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      active = false;
+      document.removeEventListener("mousedown", onPointer);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  const openItem = async (item: AdminNotification) => {
+    if (!item.isRead) {
+      try {
+        await adminApi.markNotificationRead(item._id);
+        setItems((current) => current.map((entry) => (entry._id === item._id ? { ...entry, isRead: true } : entry)));
+        setUnread((count) => Math.max(0, count - 1));
+      } catch (cause) {
+        setError(cause instanceof Error ? cause.message : "Could not update this notification.");
+        return;
+      }
+    }
+    const target = notificationPage(item);
+    if (target) {
+      setOpen(false);
+      onNavigate(target);
+    }
+  };
+
+  const markAll = async () => {
+    setBusy(true);
+    setError("");
+    try {
+      await adminApi.markAllNotificationsRead();
+      setItems((current) => current.map((entry) => ({ ...entry, isRead: true })));
+      setUnread(0);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Could not update notifications.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const label = unread ? `Notifications, ${unread} unread` : "Notifications";
+
+  return (
+    <div className="notif-wrap" ref={wrapRef}>
+      <button className="icon-button notif-button" aria-label={label} aria-expanded={open} aria-haspopup="dialog" onClick={() => setOpen((value) => !value)}>
+        <Bell size={17} />
+        {unread ? <span className="notif-count" aria-hidden="true">{unread > 99 ? "99+" : unread}</span> : null}
+      </button>
+      {open ? (
+        <section className="notif-panel" role="dialog" aria-label="Notifications">
+          <div className="notif-heading">
+            <div><span className="eyebrow">ACTIVITY</span><h3>Notifications</h3></div>
+            <button className="text-button" disabled={!unread || busy} onClick={() => void markAll()}><CheckCheck size={15} /> Mark all read</button>
+          </div>
+          {error ? <div className="form-error notif-error" role="alert">{error}</div> : null}
+          {loading && !items.length ? <div className="notif-loading"><LoadingRows count={3} /></div> : items.length ? (
+            <div className="notif-list">
+              {items.map((item) => (
+                <button key={item._id} className={`notif-item ${item.isRead ? "" : "notif-unread"}`} onClick={() => void openItem(item)}>
+                  <span className="notif-dot" aria-hidden="true" />
+                  <span className="notif-copy">
+                    <strong>{item.title}{item.count && item.count > 1 ? ` (${item.count})` : ""}</strong>
+                    {item.body ? <span>{item.body}</span> : null}
+                    <small>{formatDate(item.updatedAt)}{item.isRead ? "" : " · Unread"}</small>
+                  </span>
+                </button>
+              ))}
+            </div>
+          ) : !error ? <EmptyState icon={Bell} title="No notifications" body="New verifications and flagged sales will appear here." /> : null}
+        </section>
+      ) : null}
+    </div>
+  );
+}
+
+function Overview({ onNavigate, notify }:{ onNavigate: (page: Page) => void; notify: (message: string, tone?: Notice["tone"]) => void }) {
   const [reload, setReload] = useState(0);
   const [data, setData] = useState<Awaited<ReturnType<typeof adminApi.dashboard>> | null>(null);
   const [loading, setLoading] = useState(true);
@@ -422,7 +556,7 @@ function ReviewPage({ notify }: { notify: (message: string, tone?: Notice["tone"
 
   const decide = async (item: Transaction, decision: "approve" | "reject") => {
     const action = decision === "approve" ? "Approve" : "Reject";
-    if (!window.confirm(`${action} the ${item.flowerVariety} sale from ${submitterName(item)}?`)) return;
+    if (!window.confirm(`${action} the ${item.flowerVariety} sale between ${dealParties(item) ?? submitterName(item)}?`)) return;
     setBusyId(item._id);
     try {
       await adminApi.reviewTransaction(item._id, decision);
@@ -440,17 +574,17 @@ function ReviewPage({ notify }: { notify: (message: string, tone?: Notice["tone"
       <div className="queue-summary"><span className="queue-icon"><Clock3 size={19} /></span><span><strong>{loading ? "Loading" : items.length} {items.length === 1 ? "sale" : "sales"} waiting</strong><small>Approved sales contribute to the FairBloom price index.</small></span><button className="icon-button" aria-label="Refresh sales" onClick={() => setReload((value) => value + 1)}><RefreshCw size={17} /></button></div>
       {error ? <ErrorPanel message={error} onRetry={() => setReload((value) => value + 1)} /> : null}
       <section className="panel table-panel">
-        <div className="panel-heading"><div><span className="eyebrow">MANUAL SUBMISSIONS</span><h3>Sales awaiting review</h3></div><span className="count-pill">{items.length}</span></div>
+        <div className="panel-heading"><div><span className="eyebrow">FLAGGED BY PRICE CHECK</span><h3>Sales awaiting review</h3></div><span className="count-pill">{items.length}</span></div>
         {loading ? <LoadingRows count={4} /> : items.length ? (
           <div className="table-scroll">
             <table>
-              <thead><tr><th>Sale</th><th>Submitted by</th><th>Reported price</th><th>Submitted</th><th>Review</th></tr></thead>
+              <thead><tr><th>Sale</th><th>Traders</th><th>Agreed price</th><th>Submitted</th><th>Review</th></tr></thead>
               <tbody>
                 {items.map((item) => (
                   <tr key={item._id}>
                     <td><strong className="table-primary">{item.flowerVariety}</strong>{item.location ? <small className="table-sub">{item.location}</small> : null}</td>
-                    <td><strong>{submitterName(item)}</strong><small className="table-sub">{typeof item.submittedBy === "object" && item.submittedBy ? item.submittedBy.role : "Member"}</small></td>
-                    <td><strong>{formatCurrency(item.price)}</strong><small className="table-sub">{formatNumber(item.volume)} dozen</small></td>
+                    <td><strong>{dealParties(item) ?? submitterName(item)}</strong><small className="table-sub">{dealParties(item) ? "Farmer → Buyer" : "Member"}</small></td>
+                    <td><strong>{formatCurrency(item.price)}</strong><small className="table-sub">{formatNumber(item.volume)} dozen{item.deviationPercent !== null ? ` · ${formatNumber(item.deviationPercent)}% from index` : ""}</small></td>
                     <td className="table-muted">{formatDate(item.createdAt)}</td>
                     <td><div className="table-actions"><button className="button button-danger-soft button-sm" disabled={busyId === item._id} onClick={() => void decide(item, "reject")}><X size={15} /> Reject</button><button className="button button-primary button-sm" disabled={busyId === item._id} onClick={() => void decide(item, "approve")}><Check size={15} /> Approve</button></div></td>
                   </tr>
@@ -506,11 +640,11 @@ function HistoryPage() {
       {loading ? <LoadingRows count={5} /> : items.length ? (
         <div className="table-scroll">
           <table>
-            <thead><tr><th>Flower variety</th><th>Member</th><th>Sale details</th><th>Status</th><th>Date</th></tr></thead>
+            <thead><tr><th>Flower variety</th><th>Traders</th><th>Sale details</th><th>Status</th><th>Date</th></tr></thead>
             <tbody>
               {items.map((item) => <tr key={item._id}>
                 <td><strong className="table-primary">{item.flowerVariety}</strong>{item.location ? <small className="table-sub">{item.location}</small> : null}</td>
-                <td>{submitterName(item)}</td>
+                <td>{dealParties(item) ?? submitterName(item)}<small className="table-sub">{item.source === "manual" ? "Manual report" : "Accepted deal"}</small></td>
                 <td><strong>{formatCurrency(item.price)}</strong><small className="table-sub">{formatNumber(item.volume)} dozen</small></td>
                 <td><StatusBadge status={item.status} /></td>
                 <td className="table-muted">{formatDate(item.createdAt)}</td>
@@ -684,6 +818,7 @@ function MembersPage({ notify }: { notify: (message: string, tone?: Notice["tone
   const [search, setSearch] = useState("");
   const [role, setRole] = useState("");
   const [status, setStatus] = useState("");
+  const [verified, setVerified] = useState("");
   const [page, setPage] = useState(1);
   const [items, setItems] = useState<AdminUser[]>([]);
   const [pages, setPages] = useState(1);
@@ -703,7 +838,7 @@ function MembersPage({ notify }: { notify: (message: string, tone?: Notice["tone
     let active = true;
     setLoading(true);
     setError("");
-    adminApi.users({ search: filterSearch, role, status, page })
+    adminApi.users({ search: filterSearch, role, status, verified, page })
       .then((result) => {
         if (!active) return;
         setItems(result.users);
@@ -713,7 +848,7 @@ function MembersPage({ notify }: { notify: (message: string, tone?: Notice["tone
       .catch((cause) => { if (active) setError(cause instanceof Error ? cause.message : "Unable to load members."); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [filterSearch, role, status, page, reload]);
+  }, [filterSearch, role, status, verified, page, reload]);
 
   if (selectedId) {
     return <MemberDetail id={selectedId} onBack={() => setSelectedId("")} onChanged={() => { setSelectedId(""); setReload((value) => value + 1); }} notify={notify} />;
@@ -734,6 +869,7 @@ function MembersPage({ notify }: { notify: (message: string, tone?: Notice["tone
         <label className="search-box"><Search size={17} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search name or email" aria-label="Search name or email" />{search ? <button aria-label="Clear search" onClick={() => setSearch("")}><X size={15} /></button> : null}</label>
         <label className="select-box"><span className="sr-only">Filter by role</span><select value={role} onChange={(event) => changeFilter(setRole, event.target.value)}><option value="">All roles</option><option value="farmer">Farmer</option><option value="buyer">Buyer</option><option value="admin">Admin</option></select><ChevronDown size={15} /></label>
         <label className="select-box"><span className="sr-only">Filter by account status</span><select value={status} onChange={(event) => changeFilter(setStatus, event.target.value)}><option value="">All account statuses</option><option value="active">Active</option><option value="inactive">Inactive</option></select><ChevronDown size={15} /></label>
+        <label className="select-box"><span className="sr-only">Filter by email verification</span><select value={verified} onChange={(event) => changeFilter(setVerified, event.target.value)}><option value="">Any email status</option><option value="true">Email verified</option><option value="false">Email not verified</option></select><ChevronDown size={15} /></label>
       </div>
       {error ? <ErrorPanel message={error} onRetry={() => setReload((value) => value + 1)} /> : null}
       {loading ? <LoadingRows count={4} /> : items.length ? (
@@ -744,7 +880,7 @@ function MembersPage({ notify }: { notify: (message: string, tone?: Notice["tone
               {items.map((item) => <tr key={item._id}>
                 <td><div className="member-cell"><span className="profile-monogram">{item.name.slice(0, 1).toUpperCase()}</span><span><strong>{item.name}</strong><small className="table-sub">{item.email}</small></span></div></td>
                 <td><span className="role-pill">{item.role}</span></td>
-                <td><StatusBadge status={item.verificationStatus} /></td>
+                <td>{item.role === "admin" ? <span className="table-muted">Not required</span> : <StatusBadge status={item.verificationStatus} />}</td>
                 <td><span className={`account-state ${item.isActive ? "is-active" : "is-inactive"}`}><i />{item.isActive ? "Active" : "Inactive"}</span></td>
                 <td className="table-muted">{formatDate(item.createdAt)}</td>
                 <td><button className="button button-quiet button-sm" onClick={() => setSelectedId(item._id)}>View account <ArrowRight size={14} /></button></td>
@@ -776,16 +912,18 @@ function MemberDetail({
   const [confirmEmail, setConfirmEmail] = useState("");
   const [retention, setRetention] = useState<"anonymize" | "delete">("anonymize");
   const [busy, setBusy] = useState(false);
+  const [reload, setReload] = useState(0);
 
   useEffect(() => {
     let active = true;
     setLoading(true);
+    setError("");
     adminApi.user(id)
       .then((result) => { if (active) { setUser(result.user); setActivity(result.activity); } })
       .catch((cause) => { if (active) setError(cause instanceof Error ? cause.message : "Unable to load this account."); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [id]);
+  }, [id, reload]);
 
   const changeStatus = async () => {
     if (!user) return;
@@ -796,7 +934,10 @@ function MemberDetail({
     try {
       const result = await adminApi.setUserStatus(id, !user.isActive);
       setUser(result.user);
-      notify(result.message);
+      const cleanup = result.cleanup
+        ? ` ${result.cleanup.listingsCancelled} active ${result.cleanup.listingsCancelled === 1 ? "listing" : "listings"} and ${result.cleanup.openDealsCancelled} open ${result.cleanup.openDealsCancelled === 1 ? "deal" : "deals"} cancelled.`
+        : "";
+      notify(`${result.message}.${cleanup}`);
       if (!result.user.isActive) onChanged();
     } catch (cause) {
       notify(cause instanceof Error ? cause.message : "Could not update this account.", "error");
@@ -826,7 +967,7 @@ function MemberDetail({
   };
 
   if (loading) return <div className="panel detail-loading"><span className="spinner" /> Loading member account…</div>;
-  if (error && !user) return <ErrorPanel message={error} onRetry={() => window.location.reload()} />;
+  if (error && !user) return <ErrorPanel message={error} onRetry={() => setReload((value) => value + 1)} />;
   if (!user || !activity) return null;
 
   const transactionCount = Object.values(activity.transactions).reduce((sum, count) => sum + count, 0);
@@ -838,7 +979,7 @@ function MemberDetail({
         <div className="detail-profile">
           <span className="detail-avatar">{user.name.slice(0, 1).toUpperCase()}</span>
           <div><span className="eyebrow">MEMBER ACCOUNT</span><h2>{user.name}</h2><p>{user.email}</p></div>
-          <StatusBadge status={user.verificationStatus} />
+          {user.role !== "admin" ? <StatusBadge status={user.verificationStatus} /> : null}
         </div>
         <div className="detail-facts">
           <Fact label="Role" value={capitalize(user.role)} />
@@ -886,7 +1027,7 @@ function MiniTransaction({ transaction }: { transaction: Transaction }) {
   return (
     <div className="mini-transaction">
       <span className="mini-flower-icon"><Flower2 size={17} /></span>
-      <span className="mini-transaction-copy"><strong>{transaction.flowerVariety}</strong><small>{submitterName(transaction)} · {formatDate(transaction.createdAt)}</small></span>
+      <span className="mini-transaction-copy"><strong>{transaction.flowerVariety}</strong><small>{dealParties(transaction) ?? submitterName(transaction)} · {formatDate(transaction.createdAt)}</small></span>
       <strong className="mini-price">{formatCurrency(transaction.price)}</strong>
     </div>
   );
