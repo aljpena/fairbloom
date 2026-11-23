@@ -123,7 +123,16 @@ async function request<T>(
     );
   }
 
-  const payload: unknown = await response.json().catch(() => null);
+  const isJson = (response.headers.get("content-type") ?? "").includes("application/json");
+  if (response.ok && !isJson && response.status !== 204) {
+    // Usually means VITE_API_URL points at the admin site itself, which answers with index.html.
+    throw new ApiError(
+      "The server sent an unexpected response. Check that VITE_API_URL points to the FairBloom API.",
+      response.status
+    );
+  }
+
+  const payload: unknown = isJson ? await response.json().catch(() => null) : null;
   if (!response.ok) {
     if (response.status === 401 && token) expireSession();
     throw new ApiError(
