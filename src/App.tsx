@@ -49,9 +49,18 @@ type Notice = { message: string; tone: "success" | "error" };
 
 const pageMeta: Record<Page, { label: string; description: string }> = {
   overview: { label: "Overview", description: "A clear view of what needs your attention." },
-  review: { label: "Sale review", description: "Review deal prices that were far from the market index before they count." },
-  history: { label: "Sale records", description: "Search every sale recorded from accepted deals." },
-  verifications: { label: "Member verification", description: "Review farmer IDs and buyer business permits." },
+  review: {
+    label: "Sale review",
+    description: "Review deal prices that were far from the market index before they count.",
+  },
+  history: {
+    label: "Sale records",
+    description: "Search every sale recorded from accepted deals.",
+  },
+  verifications: {
+    label: "Member verification",
+    description: "Review farmer IDs and buyer business permits.",
+  },
   members: { label: "Members", description: "Find accounts and manage member access." },
 };
 
@@ -134,7 +143,8 @@ export default function App() {
     authToken.set(result.token);
     try {
       const { user: current } = await adminApi.me();
-      if (current.role !== "admin") throw new ApiError("This workspace is only available to administrator accounts.", 403);
+      if (current.role !== "admin")
+        throw new ApiError("This workspace is only available to administrator accounts.", 403);
       setUser(current);
     } catch (error) {
       authToken.clear();
@@ -157,10 +167,20 @@ export default function App() {
         }}
         onSignOut={signOut}
       />
-      {mobileNavOpen ? <button className="nav-scrim" aria-label="Close navigation" onClick={() => setMobileNavOpen(false)} /> : null}
+      {mobileNavOpen ? (
+        <button
+          className="nav-scrim"
+          aria-label="Close navigation"
+          onClick={() => setMobileNavOpen(false)}
+        />
+      ) : null}
       <main className="workspace">
         <header className="topbar">
-          <button className="icon-button mobile-menu" aria-label="Open navigation" onClick={() => setMobileNavOpen(true)}>
+          <button
+            className="icon-button mobile-menu"
+            aria-label="Open navigation"
+            onClick={() => setMobileNavOpen(true)}
+          >
             <Menu size={20} />
           </button>
           <div className="topbar-title">
@@ -168,13 +188,23 @@ export default function App() {
             <h1>{pageMeta[page].label}</h1>
           </div>
           <div className="topbar-user">
-            <NotificationBell onNavigate={(next) => { setPage(next); setMobileNavOpen(false); }} />
-            <div className="user-avatar"><UserRound size={18} /></div>
+            <NotificationBell
+              onNavigate={(next) => {
+                setPage(next);
+                setMobileNavOpen(false);
+              }}
+            />
+            <div className="user-avatar">
+              <UserRound size={18} />
+            </div>
             <div className="topbar-user-info">
               <strong>{user.name}</strong>
               <span>Administrator</span>
             </div>
-            <button className="signout-button" onClick={signOut}><LogOut size={16} /><span>Sign out</span></button>
+            <button className="signout-button" onClick={signOut}>
+              <LogOut size={16} />
+              <span>Sign out</span>
+            </button>
           </div>
         </header>
         <div className="page-content">
@@ -182,7 +212,9 @@ export default function App() {
             <div>
               <p>{pageMeta[page].description}</p>
             </div>
-            <span className="today-label">{new Intl.DateTimeFormat("en-PH", { dateStyle: "long" }).format(new Date())}</span>
+            <span className="today-label">
+              {new Intl.DateTimeFormat("en-PH", { dateStyle: "long" }).format(new Date())}
+            </span>
           </div>
           {page === "overview" ? <Overview onNavigate={setPage} notify={notify} /> : null}
           {page === "review" ? <ReviewPage notify={notify} /> : null}
@@ -191,13 +223,23 @@ export default function App() {
           {page === "members" ? <MembersPage notify={notify} /> : null}
         </div>
       </main>
-      {notice ? <div className={`toast toast-${notice.tone}`} role="status">{notice.tone === "success" ? <Check size={17} /> : <ShieldX size={17} />}{notice.message}</div> : null}
+      {notice ? (
+        <div className={`toast toast-${notice.tone}`} role="status">
+          {notice.tone === "success" ? <Check size={17} /> : <ShieldX size={17} />}
+          {notice.message}
+        </div>
+      ) : null}
     </div>
   );
 }
 
 function FullScreenLoading() {
-  return <div className="full-loading"><span className="spinner" /><span>Checking your administrator session…</span></div>;
+  return (
+    <div className="full-loading">
+      <span className="spinner" />
+      <span>Checking your administrator session…</span>
+    </div>
+  );
 }
 
 function LoginScreen({ onLogin }: { onLogin: (email: string, password: string) => Promise<void> }) {
@@ -222,32 +264,78 @@ function LoginScreen({ onLogin }: { onLogin: (email: string, password: string) =
   return (
     <div className="login-page">
       <div className="login-art" aria-hidden="true">
-        <div className="login-brand"><span className="brand-mark"><Flower2 size={26} /></span><span>FairBloom</span></div>
+        <div className="login-brand">
+          <span className="brand-mark">
+            <Flower2 size={26} />
+          </span>
+          <span>FairBloom</span>
+        </div>
         <div className="login-art-copy">
           <span className="eyebrow">ROOTED IN TRUST</span>
           <h1>A fairer flower trade starts with care.</h1>
           <p>One calm place to support the people and decisions behind Benguet’s flower market.</p>
         </div>
-        <div className="login-flower"><Flower2 size={280} strokeWidth={0.65} /></div>
+        <div className="login-flower">
+          <Flower2 size={280} strokeWidth={0.65} />
+        </div>
         <span className="login-art-foot">Benguet, Philippines · FairBloom 2026</span>
       </div>
       <div className="login-panel">
         <form className="login-form" onSubmit={submit}>
-          <div className="login-mobile-brand"><span className="brand-mark"><Flower2 size={23} /></span><span>FairBloom</span></div>
+          <div className="login-mobile-brand">
+            <span className="brand-mark">
+              <Flower2 size={23} />
+            </span>
+            <span>FairBloom</span>
+          </div>
           <span className="eyebrow">ADMINISTRATOR ACCESS</span>
           <h2>Welcome back</h2>
           <p className="muted">Sign in with your administrator account to continue.</p>
           <label className="field">
             <span>Email address</span>
-            <span className="input-wrap"><Mail size={17} /><input type="email" autoComplete="username" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@fairbloom.ph" required /></span>
+            <span className="input-wrap">
+              <Mail size={17} />
+              <input
+                type="email"
+                autoComplete="username"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder="you@fairbloom.ph"
+                required
+              />
+            </span>
           </label>
           <label className="field">
             <span>Password</span>
-            <input type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Enter your password" required />
+            <input
+              type="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="Enter your password"
+              required
+            />
           </label>
-          {error ? <div className="form-error" role="alert">{error}</div> : null}
-          <button className="button button-primary login-submit" disabled={busy}>{busy ? <><span className="spinner spinner-light" /> Signing in…</> : <>Sign in <ArrowRight size={17} /></>}</button>
-          <div className="login-foot"><ShieldCheck size={15} /><span>Administrator accounts only</span></div>
+          {error ? (
+            <div className="form-error" role="alert">
+              {error}
+            </div>
+          ) : null}
+          <button className="button button-primary login-submit" disabled={busy}>
+            {busy ? (
+              <>
+                <span className="spinner spinner-light" /> Signing in…
+              </>
+            ) : (
+              <>
+                Sign in <ArrowRight size={17} />
+              </>
+            )}
+          </button>
+          <div className="login-foot">
+            <ShieldCheck size={15} />
+            <span>Administrator accounts only</span>
+          </div>
         </form>
       </div>
     </div>
@@ -269,9 +357,20 @@ function Sidebar({
 }) {
   return (
     <aside className={`sidebar ${open ? "sidebar-open" : ""}`}>
-      <a className="brand" href="#" onClick={(event) => { event.preventDefault(); onNavigate("overview"); }}>
-        <span className="brand-mark"><Flower2 size={24} /></span>
-        <span className="brand-name">FairBloom<small>ADMIN WORKSPACE</small></span>
+      <a
+        className="brand"
+        href="#"
+        onClick={(event) => {
+          event.preventDefault();
+          onNavigate("overview");
+        }}
+      >
+        <span className="brand-mark">
+          <Flower2 size={24} />
+        </span>
+        <span className="brand-name">
+          FairBloom<small>ADMIN WORKSPACE</small>
+        </span>
       </a>
       <div className="sidebar-section-label">WORKSPACE</div>
       <nav className="side-nav" aria-label="Admin navigation">
@@ -283,16 +382,25 @@ function Sidebar({
             aria-current={active === page ? "page" : undefined}
             onClick={() => onNavigate(page)}
           >
-            <Icon size={19} strokeWidth={1.8} /><span>{pageMeta[page].label}</span>
+            <Icon size={19} strokeWidth={1.8} />
+            <span>{pageMeta[page].label}</span>
           </button>
         ))}
       </nav>
       <div className="sidebar-bottom">
-        <div className="sidebar-note"><ShieldCheck size={17} /><span>Protected admin access</span></div>
+        <div className="sidebar-note">
+          <ShieldCheck size={17} />
+          <span>Protected admin access</span>
+        </div>
         <div className="sidebar-profile">
           <span className="profile-monogram">{user.name.slice(0, 1).toUpperCase()}</span>
-          <span className="profile-copy"><strong>{user.name}</strong><small>Administrator</small></span>
-          <button className="sidebar-logout" aria-label="Sign out" onClick={onSignOut}><LogOut size={17} /></button>
+          <span className="profile-copy">
+            <strong>{user.name}</strong>
+            <small>Administrator</small>
+          </span>
+          <button className="sidebar-logout" aria-label="Sign out" onClick={onSignOut}>
+            <LogOut size={17} />
+          </button>
         </div>
       </div>
     </aside>
@@ -321,13 +429,19 @@ function NotificationBell({ onNavigate }: { onNavigate: (page: Page) => void }) 
   useEffect(() => {
     let active = true;
     const refresh = () => {
-      adminApi.unreadNotifications()
-        .then(({ unreadCount }) => { if (active) setUnread(unreadCount); })
+      adminApi
+        .unreadNotifications()
+        .then(({ unreadCount }) => {
+          if (active) setUnread(unreadCount);
+        })
         .catch(() => undefined);
     };
     refresh();
     const timer = window.setInterval(refresh, UNREAD_POLL_MS);
-    return () => { active = false; window.clearInterval(timer); };
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
   }, []);
 
   useEffect(() => {
@@ -335,19 +449,27 @@ function NotificationBell({ onNavigate }: { onNavigate: (page: Page) => void }) 
     let active = true;
     setLoading(true);
     setError("");
-    adminApi.notifications()
+    adminApi
+      .notifications()
       .then((result) => {
         if (!active) return;
         setItems(result.notifications);
         setUnread(result.unreadCount);
       })
-      .catch((cause) => { if (active) setError(cause instanceof Error ? cause.message : "Could not load notifications."); })
-      .finally(() => { if (active) setLoading(false); });
+      .catch((cause) => {
+        if (active)
+          setError(cause instanceof Error ? cause.message : "Could not load notifications.");
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
 
     const onPointer = (event: MouseEvent) => {
       if (wrapRef.current && !wrapRef.current.contains(event.target as Node)) setOpen(false);
     };
-    const onKey = (event: KeyboardEvent) => { if (event.key === "Escape") setOpen(false); };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
     document.addEventListener("mousedown", onPointer);
     window.addEventListener("keydown", onKey);
     return () => {
@@ -361,7 +483,9 @@ function NotificationBell({ onNavigate }: { onNavigate: (page: Page) => void }) 
     if (!item.isRead) {
       try {
         await adminApi.markNotificationRead(item._id);
-        setItems((current) => current.map((entry) => (entry._id === item._id ? { ...entry, isRead: true } : entry)));
+        setItems((current) =>
+          current.map((entry) => (entry._id === item._id ? { ...entry, isRead: true } : entry))
+        );
         setUnread((count) => Math.max(0, count - 1));
       } catch (cause) {
         setError(cause instanceof Error ? cause.message : "Could not update this notification.");
@@ -393,38 +517,87 @@ function NotificationBell({ onNavigate }: { onNavigate: (page: Page) => void }) 
 
   return (
     <div className="notif-wrap" ref={wrapRef}>
-      <button className="icon-button notif-button" aria-label={label} aria-expanded={open} aria-haspopup="dialog" onClick={() => setOpen((value) => !value)}>
+      <button
+        className="icon-button notif-button"
+        aria-label={label}
+        aria-expanded={open}
+        aria-haspopup="dialog"
+        onClick={() => setOpen((value) => !value)}
+      >
         <Bell size={17} />
-        {unread ? <span className="notif-count" aria-hidden="true">{unread > 99 ? "99+" : unread}</span> : null}
+        {unread ? (
+          <span className="notif-count" aria-hidden="true">
+            {unread > 99 ? "99+" : unread}
+          </span>
+        ) : null}
       </button>
       {open ? (
         <section className="notif-panel" role="dialog" aria-label="Notifications">
           <div className="notif-heading">
-            <div><span className="eyebrow">ACTIVITY</span><h3>Notifications</h3></div>
-            <button className="text-button" disabled={!unread || busy} onClick={() => void markAll()}><CheckCheck size={15} /> Mark all read</button>
+            <div>
+              <span className="eyebrow">ACTIVITY</span>
+              <h3>Notifications</h3>
+            </div>
+            <button
+              className="text-button"
+              disabled={!unread || busy}
+              onClick={() => void markAll()}
+            >
+              <CheckCheck size={15} /> Mark all read
+            </button>
           </div>
-          {error ? <div className="form-error notif-error" role="alert">{error}</div> : null}
-          {loading && !items.length ? <div className="notif-loading"><LoadingRows count={3} /></div> : items.length ? (
+          {error ? (
+            <div className="form-error notif-error" role="alert">
+              {error}
+            </div>
+          ) : null}
+          {loading && !items.length ? (
+            <div className="notif-loading">
+              <LoadingRows count={3} />
+            </div>
+          ) : items.length ? (
             <div className="notif-list">
               {items.map((item) => (
-                <button key={item._id} className={`notif-item ${item.isRead ? "" : "notif-unread"}`} onClick={() => void openItem(item)}>
+                <button
+                  key={item._id}
+                  className={`notif-item ${item.isRead ? "" : "notif-unread"}`}
+                  onClick={() => void openItem(item)}
+                >
                   <span className="notif-dot" aria-hidden="true" />
                   <span className="notif-copy">
-                    <strong>{item.title}{item.count && item.count > 1 ? ` (${item.count})` : ""}</strong>
+                    <strong>
+                      {item.title}
+                      {item.count && item.count > 1 ? ` (${item.count})` : ""}
+                    </strong>
                     {item.body ? <span>{item.body}</span> : null}
-                    <small>{formatDate(item.updatedAt)}{item.isRead ? "" : " · Unread"}</small>
+                    <small>
+                      {formatDate(item.updatedAt)}
+                      {item.isRead ? "" : " · Unread"}
+                    </small>
                   </span>
                 </button>
               ))}
             </div>
-          ) : !error ? <EmptyState icon={Bell} title="No notifications" body="New verifications and flagged sales will appear here." /> : null}
+          ) : !error ? (
+            <EmptyState
+              icon={Bell}
+              title="No notifications"
+              body="New verifications and flagged sales will appear here."
+            />
+          ) : null}
         </section>
       ) : null}
     </div>
   );
 }
 
-function Overview({ onNavigate, notify }:{ onNavigate: (page: Page) => void; notify: (message: string, tone?: Notice["tone"]) => void }) {
+function Overview({
+  onNavigate,
+  notify,
+}: {
+  onNavigate: (page: Page) => void;
+  notify: (message: string, tone?: Notice["tone"]) => void;
+}) {
   const [reload, setReload] = useState(0);
   const [data, setData] = useState<Awaited<ReturnType<typeof adminApi.dashboard>> | null>(null);
   const [loading, setLoading] = useState(true);
@@ -435,11 +608,20 @@ function Overview({ onNavigate, notify }:{ onNavigate: (page: Page) => void; not
     let active = true;
     setLoading(true);
     setError("");
-    adminApi.dashboard()
-      .then((result) => { if (active) setData(result); })
-      .catch((reason) => { if (active) setError(reason instanceof Error ? reason.message : "Could not load overview."); })
-      .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
+    adminApi
+      .dashboard()
+      .then((result) => {
+        if (active) setData(result);
+      })
+      .catch((reason) => {
+        if (active) setError(reason instanceof Error ? reason.message : "Could not load overview.");
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, [reload]);
 
   const downloadBackup = async () => {
@@ -464,51 +646,126 @@ function Overview({ onNavigate, notify }:{ onNavigate: (page: Page) => void; not
 
   return (
     <section className="stack-lg">
-      {error ? <ErrorPanel message={error} onRetry={() => setReload((value) => value + 1)} /> : null}
+      {error ? (
+        <ErrorPanel message={error} onRetry={() => setReload((value) => value + 1)} />
+      ) : null}
       <div className="welcome-banner">
         <div className="welcome-copy">
           <span className="eyebrow eyebrow-light">THE ADMIN DESK</span>
-          <h2>Good work grows<br /><em>from good care.</em></h2>
+          <h2>
+            Good work grows
+            <br />
+            <em>from good care.</em>
+          </h2>
           <p>Keep member accounts and sale records moving with thoughtful, timely reviews.</p>
         </div>
-        <div className="welcome-flower"><Flower2 size={190} strokeWidth={0.65} /></div>
-        <div className="welcome-chip"><span className={`status-pulse ${error ? "status-pulse-error" : ""}`} />{error ? "Connection issue" : loading ? "Refreshing records" : "Records synced"}</div>
+        <div className="welcome-flower">
+          <Flower2 size={190} strokeWidth={0.65} />
+        </div>
+        <div className="welcome-chip">
+          <span className={`status-pulse ${error ? "status-pulse-error" : ""}`} />
+          {error ? "Connection issue" : loading ? "Refreshing records" : "Records synced"}
+        </div>
       </div>
 
       <div className="section-heading">
-        <div><span className="eyebrow">YOUR WORKSPACE</span><h2>Today at a glance</h2></div>
-        <button className="text-button" onClick={() => setReload((value) => value + 1)} disabled={loading}><RefreshCw size={15} className={loading ? "spin-icon" : ""} /> Refresh</button>
+        <div>
+          <span className="eyebrow">YOUR WORKSPACE</span>
+          <h2>Today at a glance</h2>
+        </div>
+        <button
+          className="text-button"
+          onClick={() => setReload((value) => value + 1)}
+          disabled={loading}
+        >
+          <RefreshCw size={15} className={loading ? "spin-icon" : ""} /> Refresh
+        </button>
       </div>
       <div className="metric-grid">
-        <MetricCard label="Sales to review" value={loading ? "—" : data?.pendingTransactions.length ?? 0} icon={CircleDollarSign} accent="gold" onClick={() => onNavigate("review")} />
-        <MetricCard label="Verifications waiting" value={loading ? "—" : data?.pendingVerifications ?? 0} icon={BadgeCheck} accent="green" onClick={() => onNavigate("verifications")} />
-        <MetricCard label="Registered members" value={loading ? "—" : data?.totalUsers ?? 0} icon={Users} accent="rose" onClick={() => onNavigate("members")} />
+        <MetricCard
+          label="Sales to review"
+          value={loading ? "—" : (data?.pendingTransactions.length ?? 0)}
+          icon={CircleDollarSign}
+          accent="gold"
+          onClick={() => onNavigate("review")}
+        />
+        <MetricCard
+          label="Verifications waiting"
+          value={loading ? "—" : (data?.pendingVerifications ?? 0)}
+          icon={BadgeCheck}
+          accent="green"
+          onClick={() => onNavigate("verifications")}
+        />
+        <MetricCard
+          label="Registered members"
+          value={loading ? "—" : (data?.totalUsers ?? 0)}
+          icon={Users}
+          accent="rose"
+          onClick={() => onNavigate("members")}
+        />
       </div>
 
       <div className="overview-grid">
         <section className="panel">
           <div className="panel-heading">
-            <div><span className="eyebrow">NEEDS YOUR EYES</span><h3>Pending sales</h3></div>
-            <button className="text-button" onClick={() => onNavigate("review")}>View queue <ArrowRight size={15} /></button>
-          </div>
-          {loading ? <LoadingRows count={3} /> : data?.pendingTransactions.length ? (
-            <div className="mini-list">
-              {data.pendingTransactions.slice(0, 4).map((transaction) => <MiniTransaction key={transaction._id} transaction={transaction} />)}
+            <div>
+              <span className="eyebrow">NEEDS YOUR EYES</span>
+              <h3>Pending sales</h3>
             </div>
-          ) : <EmptyState icon={Check} title="All caught up" body="There are no sales waiting for review." />}
+            <button className="text-button" onClick={() => onNavigate("review")}>
+              View queue <ArrowRight size={15} />
+            </button>
+          </div>
+          {loading ? (
+            <LoadingRows count={3} />
+          ) : data?.pendingTransactions.length ? (
+            <div className="mini-list">
+              {data.pendingTransactions.slice(0, 4).map((transaction) => (
+                <MiniTransaction key={transaction._id} transaction={transaction} />
+              ))}
+            </div>
+          ) : (
+            <EmptyState
+              icon={Check}
+              title="All caught up"
+              body="There are no sales waiting for review."
+            />
+          )}
         </section>
         <section className="panel backup-panel">
-          <div className="backup-icon"><ArrowDownToLine size={21} /></div>
+          <div className="backup-icon">
+            <ArrowDownToLine size={21} />
+          </div>
           <span className="eyebrow">DATA CARE</span>
           <h3>Secure backup</h3>
-          <p>Download a complete database backup. This file may include sensitive personal information.</p>
-          <button className="button button-secondary" onClick={() => void downloadBackup()} disabled={backupBusy}>
-            {backupBusy ? <><span className="spinner" /> Preparing…</> : <><ArrowDownToLine size={16} /> Download backup</>}
+          <p>
+            Download a complete database backup. This file may include sensitive personal
+            information.
+          </p>
+          <button
+            className="button button-secondary"
+            onClick={() => void downloadBackup()}
+            disabled={backupBusy}
+          >
+            {backupBusy ? (
+              <>
+                <span className="spinner" /> Preparing…
+              </>
+            ) : (
+              <>
+                <ArrowDownToLine size={16} /> Download backup
+              </>
+            )}
           </button>
-          <span className="backup-caption"><ShieldCheck size={14} /> Administrator-only · No-store response</span>
+          <span className="backup-caption">
+            <ShieldCheck size={14} /> Administrator-only · No-store response
+          </span>
         </section>
       </div>
-      <div className="footnote"><Leaf size={15} /><span>Every careful review helps keep the Benguet flower market fair for everyone.</span></div>
+      <div className="footnote">
+        <Leaf size={15} />
+        <span>Every careful review helps keep the Benguet flower market fair for everyone.</span>
+      </div>
     </section>
   );
 }
@@ -528,10 +785,14 @@ function MetricCard({
 }) {
   return (
     <button className="metric-card" onClick={onClick}>
-      <span className={`metric-icon metric-${accent}`}><Icon size={21} /></span>
+      <span className={`metric-icon metric-${accent}`}>
+        <Icon size={21} />
+      </span>
       <span className="metric-label">{label}</span>
       <strong className="metric-value">{value}</strong>
-      <span className="metric-link">Open list <ArrowRight size={14} /></span>
+      <span className="metric-link">
+        Open list <ArrowRight size={14} />
+      </span>
     </button>
   );
 }
@@ -547,23 +808,40 @@ function ReviewPage({ notify }: { notify: (message: string, tone?: Notice["tone"
     let active = true;
     setLoading(true);
     setError("");
-    adminApi.pendingTransactions()
-      .then(({ transactions }) => { if (active) setItems(transactions); })
-      .catch((reason) => { if (active) setError(reason instanceof Error ? reason.message : "Unable to load sales."); })
-      .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
+    adminApi
+      .pendingTransactions()
+      .then(({ transactions }) => {
+        if (active) setItems(transactions);
+      })
+      .catch((reason) => {
+        if (active) setError(reason instanceof Error ? reason.message : "Unable to load sales.");
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, [reload]);
 
   const decide = async (item: Transaction, decision: "approve" | "reject") => {
     const action = decision === "approve" ? "Approve" : "Reject";
-    if (!window.confirm(`${action} the ${item.flowerVariety} sale between ${dealParties(item) ?? submitterName(item)}?`)) return;
+    if (
+      !window.confirm(
+        `${action} the ${item.flowerVariety} sale between ${dealParties(item) ?? submitterName(item)}?`
+      )
+    )
+      return;
     setBusyId(item._id);
     try {
       await adminApi.reviewTransaction(item._id, decision);
       setItems((current) => current.filter((entry) => entry._id !== item._id));
       notify(`Sale ${decision === "approve" ? "approved" : "rejected"}.`);
     } catch (reason) {
-      notify(reason instanceof Error ? reason.message : `Could not ${action.toLowerCase()} this sale.`, "error");
+      notify(
+        reason instanceof Error ? reason.message : `Could not ${action.toLowerCase()} this sale.`,
+        "error"
+      );
     } finally {
       setBusyId("");
     }
@@ -571,28 +849,102 @@ function ReviewPage({ notify }: { notify: (message: string, tone?: Notice["tone"
 
   return (
     <div className="stack-md">
-      <div className="queue-summary"><span className="queue-icon"><Clock3 size={19} /></span><span><strong>{loading ? "Loading" : items.length} {items.length === 1 ? "sale" : "sales"} waiting</strong><small>Approved sales contribute to the FairBloom price index.</small></span><button className="icon-button" aria-label="Refresh sales" onClick={() => setReload((value) => value + 1)}><RefreshCw size={17} /></button></div>
-      {error ? <ErrorPanel message={error} onRetry={() => setReload((value) => value + 1)} /> : null}
+      <div className="queue-summary">
+        <span className="queue-icon">
+          <Clock3 size={19} />
+        </span>
+        <span>
+          <strong>
+            {loading ? "Loading" : items.length} {items.length === 1 ? "sale" : "sales"} waiting
+          </strong>
+          <small>Approved sales contribute to the FairBloom price index.</small>
+        </span>
+        <button
+          className="icon-button"
+          aria-label="Refresh sales"
+          onClick={() => setReload((value) => value + 1)}
+        >
+          <RefreshCw size={17} />
+        </button>
+      </div>
+      {error ? (
+        <ErrorPanel message={error} onRetry={() => setReload((value) => value + 1)} />
+      ) : null}
       <section className="panel table-panel">
-        <div className="panel-heading"><div><span className="eyebrow">FLAGGED BY PRICE CHECK</span><h3>Sales awaiting review</h3></div><span className="count-pill">{items.length}</span></div>
-        {loading ? <LoadingRows count={4} /> : items.length ? (
+        <div className="panel-heading">
+          <div>
+            <span className="eyebrow">FLAGGED BY PRICE CHECK</span>
+            <h3>Sales awaiting review</h3>
+          </div>
+          <span className="count-pill">{items.length}</span>
+        </div>
+        {loading ? (
+          <LoadingRows count={4} />
+        ) : items.length ? (
           <div className="table-scroll">
             <table>
-              <thead><tr><th>Sale</th><th>Traders</th><th>Agreed price</th><th>Submitted</th><th>Review</th></tr></thead>
+              <thead>
+                <tr>
+                  <th>Sale</th>
+                  <th>Traders</th>
+                  <th>Agreed price</th>
+                  <th>Submitted</th>
+                  <th>Review</th>
+                </tr>
+              </thead>
               <tbody>
                 {items.map((item) => (
                   <tr key={item._id}>
-                    <td><strong className="table-primary">{item.flowerVariety}</strong>{item.location ? <small className="table-sub">{item.location}</small> : null}</td>
-                    <td><strong>{dealParties(item) ?? submitterName(item)}</strong><small className="table-sub">{dealParties(item) ? "Farmer → Buyer" : "Member"}</small></td>
-                    <td><strong>{formatCurrency(item.price)}</strong><small className="table-sub">{formatNumber(item.volume)} dozen{item.deviationPercent !== null ? ` · ${formatNumber(item.deviationPercent)}% from index` : ""}</small></td>
+                    <td>
+                      <strong className="table-primary">{item.flowerVariety}</strong>
+                      {item.location ? <small className="table-sub">{item.location}</small> : null}
+                    </td>
+                    <td>
+                      <strong>{dealParties(item) ?? submitterName(item)}</strong>
+                      <small className="table-sub">
+                        {dealParties(item) ? "Farmer → Buyer" : "Member"}
+                      </small>
+                    </td>
+                    <td>
+                      <strong>{formatCurrency(item.price)}</strong>
+                      <small className="table-sub">
+                        {formatNumber(item.volume)} dozen
+                        {item.deviationPercent !== null
+                          ? ` · ${formatNumber(item.deviationPercent)}% from index`
+                          : ""}
+                      </small>
+                    </td>
                     <td className="table-muted">{formatDate(item.createdAt)}</td>
-                    <td><div className="table-actions"><button className="button button-danger-soft button-sm" disabled={busyId === item._id} onClick={() => void decide(item, "reject")}><X size={15} /> Reject</button><button className="button button-primary button-sm" disabled={busyId === item._id} onClick={() => void decide(item, "approve")}><Check size={15} /> Approve</button></div></td>
+                    <td>
+                      <div className="table-actions">
+                        <button
+                          className="button button-danger-soft button-sm"
+                          disabled={busyId === item._id}
+                          onClick={() => void decide(item, "reject")}
+                        >
+                          <X size={15} /> Reject
+                        </button>
+                        <button
+                          className="button button-primary button-sm"
+                          disabled={busyId === item._id}
+                          onClick={() => void decide(item, "approve")}
+                        >
+                          <Check size={15} /> Approve
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-        ) : !error ? <EmptyState icon={Check} title="Nothing waiting" body="Every sale submission has been reviewed." /> : null}
+        ) : !error ? (
+          <EmptyState
+            icon={Check}
+            title="Nothing waiting"
+            body="Every sale submission has been reviewed."
+          />
+        ) : null}
       </section>
     </div>
   );
@@ -610,7 +962,10 @@ function HistoryPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const timer = window.setTimeout(() => { setDebounced(search.trim()); setPage(1); }, 300);
+    const timer = window.setTimeout(() => {
+      setDebounced(search.trim());
+      setPage(1);
+    }, 300);
     return () => window.clearTimeout(timer);
   }, [search]);
 
@@ -618,47 +973,108 @@ function HistoryPage() {
     let active = true;
     setLoading(true);
     setError("");
-    adminApi.transactions(page, debounced)
+    adminApi
+      .transactions(page, debounced)
       .then((result) => {
         if (!active) return;
         setItems(result.transactions);
         setPages(result.pagination.pages);
         setTotal(result.pagination.total);
       })
-      .catch((reason) => { if (active) setError(reason instanceof Error ? reason.message : "Unable to load sale records."); })
-      .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
+      .catch((reason) => {
+        if (active)
+          setError(reason instanceof Error ? reason.message : "Unable to load sale records.");
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, [page, debounced, reload]);
 
   return (
     <section className="panel table-panel">
       <div className="panel-heading history-heading">
-        <div><span className="eyebrow">RECORDS</span><h3>All sale transactions</h3></div>
-        <label className="search-box"><Search size={17} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search flower variety" aria-label="Search flower variety" />{search ? <button aria-label="Clear search" onClick={() => setSearch("")}><X size={15} /></button> : null}</label>
+        <div>
+          <span className="eyebrow">RECORDS</span>
+          <h3>All sale transactions</h3>
+        </div>
+        <label className="search-box">
+          <Search size={17} />
+          <input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search flower variety"
+            aria-label="Search flower variety"
+          />
+          {search ? (
+            <button aria-label="Clear search" onClick={() => setSearch("")}>
+              <X size={15} />
+            </button>
+          ) : null}
+        </label>
       </div>
-      {error ? <ErrorPanel message={error} onRetry={() => setReload((value) => value + 1)} /> : null}
-      {loading ? <LoadingRows count={5} /> : items.length ? (
+      {error ? (
+        <ErrorPanel message={error} onRetry={() => setReload((value) => value + 1)} />
+      ) : null}
+      {loading ? (
+        <LoadingRows count={5} />
+      ) : items.length ? (
         <div className="table-scroll">
           <table>
-            <thead><tr><th>Flower variety</th><th>Traders</th><th>Sale details</th><th>Status</th><th>Date</th></tr></thead>
+            <thead>
+              <tr>
+                <th>Flower variety</th>
+                <th>Traders</th>
+                <th>Sale details</th>
+                <th>Status</th>
+                <th>Date</th>
+              </tr>
+            </thead>
             <tbody>
-              {items.map((item) => <tr key={item._id}>
-                <td><strong className="table-primary">{item.flowerVariety}</strong>{item.location ? <small className="table-sub">{item.location}</small> : null}</td>
-                <td>{dealParties(item) ?? submitterName(item)}<small className="table-sub">{item.source === "manual" ? "Manual report" : "Accepted deal"}</small></td>
-                <td><strong>{formatCurrency(item.price)}</strong><small className="table-sub">{formatNumber(item.volume)} dozen</small></td>
-                <td><StatusBadge status={item.status} /></td>
-                <td className="table-muted">{formatDate(item.createdAt)}</td>
-              </tr>)}
+              {items.map((item) => (
+                <tr key={item._id}>
+                  <td>
+                    <strong className="table-primary">{item.flowerVariety}</strong>
+                    {item.location ? <small className="table-sub">{item.location}</small> : null}
+                  </td>
+                  <td>
+                    {dealParties(item) ?? submitterName(item)}
+                    <small className="table-sub">
+                      {item.source === "manual" ? "Manual report" : "Accepted deal"}
+                    </small>
+                  </td>
+                  <td>
+                    <strong>{formatCurrency(item.price)}</strong>
+                    <small className="table-sub">{formatNumber(item.volume)} dozen</small>
+                  </td>
+                  <td>
+                    <StatusBadge status={item.status} />
+                  </td>
+                  <td className="table-muted">{formatDate(item.createdAt)}</td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
-      ) : !error ? <EmptyState icon={TrendingUp} title="No sale records found" body={search ? "Try another flower variety." : "Sale transactions will appear here."} /> : null}
+      ) : !error ? (
+        <EmptyState
+          icon={TrendingUp}
+          title="No sale records found"
+          body={search ? "Try another flower variety." : "Sale transactions will appear here."}
+        />
+      ) : null}
       <Pagination page={page} pages={pages} total={total} pageSize={30} onChange={setPage} />
     </section>
   );
 }
 
-function VerificationsPage({ notify }: { notify: (message: string, tone?: Notice["tone"]) => void }) {
+function VerificationsPage({
+  notify,
+}: {
+  notify: (message: string, tone?: Notice["tone"]) => void;
+}) {
   const [status, setStatus] = useState<VerificationStatus>("pending");
   const [page, setPage] = useState(1);
   const [items, setItems] = useState<VerificationUser[]>([]);
@@ -675,16 +1091,24 @@ function VerificationsPage({ notify }: { notify: (message: string, tone?: Notice
     let active = true;
     setLoading(true);
     setError("");
-    adminApi.verifications(status, page)
+    adminApi
+      .verifications(status, page)
       .then((result) => {
         if (!active) return;
         setItems(result.users);
         setPages(result.pagination.pages);
         setTotal(result.pagination.total);
       })
-      .catch((cause) => { if (active) setError(cause instanceof Error ? cause.message : "Unable to load verifications."); })
-      .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
+      .catch((cause) => {
+        if (active)
+          setError(cause instanceof Error ? cause.message : "Unable to load verifications.");
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, [status, page, reload]);
 
   const chooseStatus = (next: VerificationStatus) => {
@@ -692,7 +1116,11 @@ function VerificationsPage({ notify }: { notify: (message: string, tone?: Notice
     setPage(1);
   };
 
-  const decide = async (item: VerificationUser, decision: "approve" | "reject", rejectionReason?: string) => {
+  const decide = async (
+    item: VerificationUser,
+    decision: "approve" | "reject",
+    rejectionReason?: string
+  ) => {
     setBusyId(item._id);
     try {
       await adminApi.reviewVerification(item._id, decision, rejectionReason);
@@ -701,7 +1129,10 @@ function VerificationsPage({ notify }: { notify: (message: string, tone?: Notice
       setReason("");
       setReload((value) => value + 1);
     } catch (cause) {
-      notify(cause instanceof Error ? cause.message : "Could not review this verification.", "error");
+      notify(
+        cause instanceof Error ? cause.message : "Could not review this verification.",
+        "error"
+      );
     } finally {
       setBusyId("");
     }
@@ -716,22 +1147,100 @@ function VerificationsPage({ notify }: { notify: (message: string, tone?: Notice
   return (
     <div className="stack-md">
       <div className="filter-tabs" role="tablist" aria-label="Verification status">
-        {(["pending", "approved", "rejected"] as const).map((value) => <button key={value} role="tab" aria-selected={status === value} className={status === value ? "filter-tab active" : "filter-tab"} onClick={() => chooseStatus(value)}>{value === "pending" ? "Waiting review" : value === "approved" ? "Approved" : "Rejected"}</button>)}
-        <button className="icon-button filter-refresh" aria-label="Refresh verification queue" onClick={() => setReload((value) => value + 1)}><RefreshCw size={17} /></button>
+        {(["pending", "approved", "rejected"] as const).map((value) => (
+          <button
+            key={value}
+            role="tab"
+            aria-selected={status === value}
+            className={status === value ? "filter-tab active" : "filter-tab"}
+            onClick={() => chooseStatus(value)}
+          >
+            {value === "pending"
+              ? "Waiting review"
+              : value === "approved"
+                ? "Approved"
+                : "Rejected"}
+          </button>
+        ))}
+        <button
+          className="icon-button filter-refresh"
+          aria-label="Refresh verification queue"
+          onClick={() => setReload((value) => value + 1)}
+        >
+          <RefreshCw size={17} />
+        </button>
       </div>
-      {error ? <ErrorPanel message={error} onRetry={() => setReload((value) => value + 1)} /> : null}
-      {loading ? <div className="verification-grid"><LoadingCard /><LoadingCard /></div> : items.length ? (
+      {error ? (
+        <ErrorPanel message={error} onRetry={() => setReload((value) => value + 1)} />
+      ) : null}
+      {loading ? (
         <div className="verification-grid">
-          {items.map((item) => <VerificationCard key={item._id} item={item} status={status} busy={busyId === item._id} onApprove={() => void decide(item, "approve")} onReject={() => { setRejecting(item); setReason(""); }} />)}
+          <LoadingCard />
+          <LoadingCard />
         </div>
-      ) : !error ? <EmptyState icon={BadgeCheck} title={`No ${status} verifications`} body={status === "pending" ? "New member documents will appear here." : `There are no ${status} verification records.`} /> : null}
+      ) : items.length ? (
+        <div className="verification-grid">
+          {items.map((item) => (
+            <VerificationCard
+              key={item._id}
+              item={item}
+              status={status}
+              busy={busyId === item._id}
+              onApprove={() => void decide(item, "approve")}
+              onReject={() => {
+                setRejecting(item);
+                setReason("");
+              }}
+            />
+          ))}
+        </div>
+      ) : !error ? (
+        <EmptyState
+          icon={BadgeCheck}
+          title={`No ${status} verifications`}
+          body={
+            status === "pending"
+              ? "New member documents will appear here."
+              : `There are no ${status} verification records.`
+          }
+        />
+      ) : null}
       <Pagination page={page} pages={pages} total={total} onChange={setPage} />
       {rejecting ? (
         <Modal title={`Reject ${rejecting.name}'s verification`} onClose={() => setRejecting(null)}>
           <form className="stack-md" onSubmit={submitRejection}>
-            <p className="muted">Give the member a clear reason so they know what to correct. The reason is shown to them in the app.</p>
-            <label className="field"><span>Reason <small>Required · up to 300 characters</small></span><textarea value={reason} onChange={(event) => setReason(event.target.value)} maxLength={300} rows={4} placeholder="Explain what needs to be corrected…" required /></label>
-            <div className="modal-actions"><button type="button" className="button button-quiet" onClick={() => setRejecting(null)}>Cancel</button><button className="button button-danger" disabled={!reason.trim() || busyId === rejecting._id}>{busyId === rejecting._id ? "Submitting…" : "Reject verification"}</button></div>
+            <p className="muted">
+              Give the member a clear reason so they know what to correct. The reason is shown to
+              them in the app.
+            </p>
+            <label className="field">
+              <span>
+                Reason <small>Required · up to 300 characters</small>
+              </span>
+              <textarea
+                value={reason}
+                onChange={(event) => setReason(event.target.value)}
+                maxLength={300}
+                rows={4}
+                placeholder="Explain what needs to be corrected…"
+                required
+              />
+            </label>
+            <div className="modal-actions">
+              <button
+                type="button"
+                className="button button-quiet"
+                onClick={() => setRejecting(null)}
+              >
+                Cancel
+              </button>
+              <button
+                className="button button-danger"
+                disabled={!reason.trim() || busyId === rejecting._id}
+              >
+                {busyId === rejecting._id ? "Submitting…" : "Reject verification"}
+              </button>
+            </div>
           </form>
         </Modal>
       ) : null}
@@ -761,13 +1270,17 @@ function VerificationCard({
     let objectUrl = "";
     setImageError("");
     if (item.documentUrl) {
-      adminApi.verificationImage(item.documentUrl)
+      adminApi
+        .verificationImage(item.documentUrl)
         .then((url) => {
           objectUrl = url;
           if (active) setImageUrl(url);
           else URL.revokeObjectURL(url);
         })
-        .catch((error) => { if (active) setImageError(error instanceof Error ? error.message : "Document unavailable."); });
+        .catch((error) => {
+          if (active)
+            setImageError(error instanceof Error ? error.message : "Document unavailable.");
+        });
     } else {
       setImageUrl("");
     }
@@ -789,15 +1302,58 @@ function VerificationCard({
           >
             <img src={imageUrl} alt={`${item.name}'s verification document`} />
           </button>
-        ) : <div className="document-placeholder"><ShieldX size={25} /><span>{imageError || "No document on file"}</span></div>}
+        ) : (
+          <div className="document-placeholder">
+            <ShieldX size={25} />
+            <span>{imageError || "No document on file"}</span>
+          </div>
+        )}
       </div>
       <div className="verification-body">
-        <div className="verification-title"><div><h3>{item.name}</h3><span>{item.role === "farmer" ? "Farmer" : "Buyer"}</span></div><StatusBadge status={item.verificationStatus} /></div>
-        <div className="verification-meta"><span><Mail size={14} />{item.email}</span>{item.phone ? <span><UserRound size={14} />{item.phone}</span> : null}</div>
-        <div className="location-line">{item.farmLocation || item.businessLocation ? <><MapPin size={14} />{item.farmLocation || item.businessLocation}</> : null}{item.buyerCategory ? <span>{item.buyerCategory}</span> : null}</div>
+        <div className="verification-title">
+          <div>
+            <h3>{item.name}</h3>
+            <span>{item.role === "farmer" ? "Farmer" : "Buyer"}</span>
+          </div>
+          <StatusBadge status={item.verificationStatus} />
+        </div>
+        <div className="verification-meta">
+          <span>
+            <Mail size={14} />
+            {item.email}
+          </span>
+          {item.phone ? (
+            <span>
+              <UserRound size={14} />
+              {item.phone}
+            </span>
+          ) : null}
+        </div>
+        <div className="location-line">
+          {item.farmLocation || item.businessLocation ? (
+            <>
+              <MapPin size={14} />
+              {item.farmLocation || item.businessLocation}
+            </>
+          ) : null}
+          {item.buyerCategory ? <span>{item.buyerCategory}</span> : null}
+        </div>
         {item.verificationNote ? <p className="review-note">{item.verificationNote}</p> : null}
         <p className="submitted-date">Joined {formatDate(item.createdAt)}</p>
-        {status === "pending" ? <div className="verification-actions"><button className="button button-danger-soft" disabled={busy} onClick={onReject}><X size={16} /> Reject</button><button className="button button-primary" disabled={busy || !item.documentUrl} onClick={onApprove}><Check size={16} /> Approve member</button></div> : null}
+        {status === "pending" ? (
+          <div className="verification-actions">
+            <button className="button button-danger-soft" disabled={busy} onClick={onReject}>
+              <X size={16} /> Reject
+            </button>
+            <button
+              className="button button-primary"
+              disabled={busy || !item.documentUrl}
+              onClick={onApprove}
+            >
+              <Check size={16} /> Approve member
+            </button>
+          </div>
+        ) : null}
       </div>
       {previewOpen && imageUrl ? (
         <Modal
@@ -830,7 +1386,10 @@ function MembersPage({ notify }: { notify: (message: string, tone?: Notice["tone
   const [filterSearch, setFilterSearch] = useState("");
 
   useEffect(() => {
-    const timer = window.setTimeout(() => { setFilterSearch(search.trim()); setPage(1); }, 300);
+    const timer = window.setTimeout(() => {
+      setFilterSearch(search.trim());
+      setPage(1);
+    }, 300);
     return () => window.clearTimeout(timer);
   }, [search]);
 
@@ -838,20 +1397,37 @@ function MembersPage({ notify }: { notify: (message: string, tone?: Notice["tone
     let active = true;
     setLoading(true);
     setError("");
-    adminApi.users({ search: filterSearch, role, status, verified, page })
+    adminApi
+      .users({ search: filterSearch, role, status, verified, page })
       .then((result) => {
         if (!active) return;
         setItems(result.users);
         setPages(result.pagination.pages);
         setTotal(result.pagination.total);
       })
-      .catch((cause) => { if (active) setError(cause instanceof Error ? cause.message : "Unable to load members."); })
-      .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
+      .catch((cause) => {
+        if (active) setError(cause instanceof Error ? cause.message : "Unable to load members.");
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, [filterSearch, role, status, verified, page, reload]);
 
   if (selectedId) {
-    return <MemberDetail id={selectedId} onBack={() => setSelectedId("")} onChanged={() => { setSelectedId(""); setReload((value) => value + 1); }} notify={notify} />;
+    return (
+      <MemberDetail
+        id={selectedId}
+        onBack={() => setSelectedId("")}
+        onChanged={() => {
+          setSelectedId("");
+          setReload((value) => value + 1);
+        }}
+        notify={notify}
+      />
+    );
   }
 
   const changeFilter = (setter: (value: string) => void, value: string) => {
@@ -862,33 +1438,138 @@ function MembersPage({ notify }: { notify: (message: string, tone?: Notice["tone
   return (
     <section className="panel table-panel">
       <div className="panel-heading members-heading">
-        <div><span className="eyebrow">DIRECTORY</span><h3>Member accounts <span className="subtle-count">{total.toLocaleString()}</span></h3></div>
-        <button className="icon-button" aria-label="Refresh members" onClick={() => setReload((value) => value + 1)}><RefreshCw size={17} /></button>
+        <div>
+          <span className="eyebrow">DIRECTORY</span>
+          <h3>
+            Member accounts <span className="subtle-count">{total.toLocaleString()}</span>
+          </h3>
+        </div>
+        <button
+          className="icon-button"
+          aria-label="Refresh members"
+          onClick={() => setReload((value) => value + 1)}
+        >
+          <RefreshCw size={17} />
+        </button>
       </div>
       <div className="filter-bar">
-        <label className="search-box"><Search size={17} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search name or email" aria-label="Search name or email" />{search ? <button aria-label="Clear search" onClick={() => setSearch("")}><X size={15} /></button> : null}</label>
-        <label className="select-box"><span className="sr-only">Filter by role</span><select value={role} onChange={(event) => changeFilter(setRole, event.target.value)}><option value="">All roles</option><option value="farmer">Farmer</option><option value="buyer">Buyer</option><option value="admin">Admin</option></select><ChevronDown size={15} /></label>
-        <label className="select-box"><span className="sr-only">Filter by account status</span><select value={status} onChange={(event) => changeFilter(setStatus, event.target.value)}><option value="">All account statuses</option><option value="active">Active</option><option value="inactive">Inactive</option></select><ChevronDown size={15} /></label>
-        <label className="select-box"><span className="sr-only">Filter by email verification</span><select value={verified} onChange={(event) => changeFilter(setVerified, event.target.value)}><option value="">Any email status</option><option value="true">Email verified</option><option value="false">Email not verified</option></select><ChevronDown size={15} /></label>
+        <label className="search-box">
+          <Search size={17} />
+          <input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search name or email"
+            aria-label="Search name or email"
+          />
+          {search ? (
+            <button aria-label="Clear search" onClick={() => setSearch("")}>
+              <X size={15} />
+            </button>
+          ) : null}
+        </label>
+        <label className="select-box">
+          <span className="sr-only">Filter by role</span>
+          <select value={role} onChange={(event) => changeFilter(setRole, event.target.value)}>
+            <option value="">All roles</option>
+            <option value="farmer">Farmer</option>
+            <option value="buyer">Buyer</option>
+            <option value="admin">Admin</option>
+          </select>
+          <ChevronDown size={15} />
+        </label>
+        <label className="select-box">
+          <span className="sr-only">Filter by account status</span>
+          <select value={status} onChange={(event) => changeFilter(setStatus, event.target.value)}>
+            <option value="">All account statuses</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+          <ChevronDown size={15} />
+        </label>
+        <label className="select-box">
+          <span className="sr-only">Filter by email verification</span>
+          <select
+            value={verified}
+            onChange={(event) => changeFilter(setVerified, event.target.value)}
+          >
+            <option value="">Any email status</option>
+            <option value="true">Email verified</option>
+            <option value="false">Email not verified</option>
+          </select>
+          <ChevronDown size={15} />
+        </label>
       </div>
-      {error ? <ErrorPanel message={error} onRetry={() => setReload((value) => value + 1)} /> : null}
-      {loading ? <LoadingRows count={4} /> : items.length ? (
+      {error ? (
+        <ErrorPanel message={error} onRetry={() => setReload((value) => value + 1)} />
+      ) : null}
+      {loading ? (
+        <LoadingRows count={4} />
+      ) : items.length ? (
         <div className="table-scroll">
           <table>
-            <thead><tr><th>Member</th><th>Role</th><th>Verification</th><th>Account</th><th>Joined</th><th /></tr></thead>
+            <thead>
+              <tr>
+                <th>Member</th>
+                <th>Role</th>
+                <th>Verification</th>
+                <th>Account</th>
+                <th>Joined</th>
+                <th />
+              </tr>
+            </thead>
             <tbody>
-              {items.map((item) => <tr key={item._id}>
-                <td><div className="member-cell"><span className="profile-monogram">{item.name.slice(0, 1).toUpperCase()}</span><span><strong>{item.name}</strong><small className="table-sub">{item.email}</small></span></div></td>
-                <td><span className="role-pill">{item.role}</span></td>
-                <td>{item.role === "admin" ? <span className="table-muted">Not required</span> : <StatusBadge status={item.verificationStatus} />}</td>
-                <td><span className={`account-state ${item.isActive ? "is-active" : "is-inactive"}`}><i />{item.isActive ? "Active" : "Inactive"}</span></td>
-                <td className="table-muted">{formatDate(item.createdAt)}</td>
-                <td><button className="button button-quiet button-sm" onClick={() => setSelectedId(item._id)}>View account <ArrowRight size={14} /></button></td>
-              </tr>)}
+              {items.map((item) => (
+                <tr key={item._id}>
+                  <td>
+                    <div className="member-cell">
+                      <span className="profile-monogram">
+                        {item.name.slice(0, 1).toUpperCase()}
+                      </span>
+                      <span>
+                        <strong>{item.name}</strong>
+                        <small className="table-sub">{item.email}</small>
+                      </span>
+                    </div>
+                  </td>
+                  <td>
+                    <span className="role-pill">{item.role}</span>
+                  </td>
+                  <td>
+                    {item.role === "admin" ? (
+                      <span className="table-muted">Not required</span>
+                    ) : (
+                      <StatusBadge status={item.verificationStatus} />
+                    )}
+                  </td>
+                  <td>
+                    <span
+                      className={`account-state ${item.isActive ? "is-active" : "is-inactive"}`}
+                    >
+                      <i />
+                      {item.isActive ? "Active" : "Inactive"}
+                    </span>
+                  </td>
+                  <td className="table-muted">{formatDate(item.createdAt)}</td>
+                  <td>
+                    <button
+                      className="button button-quiet button-sm"
+                      onClick={() => setSelectedId(item._id)}
+                    >
+                      View account <ArrowRight size={14} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
-      ) : !error ? <EmptyState icon={Users} title="No members found" body="Try changing your search or filters." /> : null}
+      ) : !error ? (
+        <EmptyState
+          icon={Users}
+          title="No members found"
+          body="Try changing your search or filters."
+        />
+      ) : null}
       <Pagination page={page} pages={pages} total={total} onChange={setPage} />
     </section>
   );
@@ -906,7 +1587,10 @@ function MemberDetail({
   notify: (message: string, tone?: Notice["tone"]) => void;
 }) {
   const [user, setUser] = useState<AdminUser | null>(null);
-  const [activity, setActivity] = useState<{ activeListings: number; transactions: Record<string, number> } | null>(null);
+  const [activity, setActivity] = useState<{
+    activeListings: number;
+    transactions: Record<string, number>;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [confirmEmail, setConfirmEmail] = useState("");
@@ -918,18 +1602,38 @@ function MemberDetail({
     let active = true;
     setLoading(true);
     setError("");
-    adminApi.user(id)
-      .then((result) => { if (active) { setUser(result.user); setActivity(result.activity); } })
-      .catch((cause) => { if (active) setError(cause instanceof Error ? cause.message : "Unable to load this account."); })
-      .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
+    adminApi
+      .user(id)
+      .then((result) => {
+        if (active) {
+          setUser(result.user);
+          setActivity(result.activity);
+        }
+      })
+      .catch((cause) => {
+        if (active)
+          setError(cause instanceof Error ? cause.message : "Unable to load this account.");
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, [id, reload]);
 
   const changeStatus = async () => {
     if (!user) return;
     const action = user.isActive ? "deactivate" : "reactivate";
-    const detail = user.isActive ? "Active listings will be cancelled and open deals will be cancelled." : "This member will be able to sign in again.";
-    if (!window.confirm(`${action === "deactivate" ? "Deactivate" : "Reactivate"} ${user.name}?\n\n${detail}`)) return;
+    const detail = user.isActive
+      ? "Active listings will be cancelled and open deals will be cancelled."
+      : "This member will be able to sign in again.";
+    if (
+      !window.confirm(
+        `${action === "deactivate" ? "Deactivate" : "Reactivate"} ${user.name}?\n\n${detail}`
+      )
+    )
+      return;
     setBusy(true);
     try {
       const result = await adminApi.setUserStatus(id, !user.isActive);
@@ -949,8 +1653,16 @@ function MemberDetail({
   const erase = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!user || confirmEmail !== user.email) return;
-    const transactionText = retention === "anonymize" ? "Transaction history will be anonymized and kept in the price index." : "The member's transaction history will also be deleted.";
-    if (!window.confirm(`Permanently erase ${user.name}?\n\n${transactionText}\n\nThis cannot be undone.`)) return;
+    const transactionText =
+      retention === "anonymize"
+        ? "Transaction history will be anonymized and kept in the price index."
+        : "The member's transaction history will also be deleted.";
+    if (
+      !window.confirm(
+        `Permanently erase ${user.name}?\n\n${transactionText}\n\nThis cannot be undone.`
+      )
+    )
+      return;
     setBusy(true);
     setError("");
     try {
@@ -966,19 +1678,34 @@ function MemberDetail({
     }
   };
 
-  if (loading) return <div className="panel detail-loading"><span className="spinner" /> Loading member account…</div>;
-  if (error && !user) return <ErrorPanel message={error} onRetry={() => setReload((value) => value + 1)} />;
+  if (loading)
+    return (
+      <div className="panel detail-loading">
+        <span className="spinner" /> Loading member account…
+      </div>
+    );
+  if (error && !user)
+    return <ErrorPanel message={error} onRetry={() => setReload((value) => value + 1)} />;
   if (!user || !activity) return null;
 
-  const transactionCount = Object.values(activity.transactions).reduce((sum, count) => sum + count, 0);
+  const transactionCount = Object.values(activity.transactions).reduce(
+    (sum, count) => sum + count,
+    0
+  );
 
   return (
     <div className="stack-md">
-      <button className="back-link" onClick={onBack}><ArrowLeft size={16} /> Back to members</button>
+      <button className="back-link" onClick={onBack}>
+        <ArrowLeft size={16} /> Back to members
+      </button>
       <section className="panel member-detail-panel">
         <div className="detail-profile">
           <span className="detail-avatar">{user.name.slice(0, 1).toUpperCase()}</span>
-          <div><span className="eyebrow">MEMBER ACCOUNT</span><h2>{user.name}</h2><p>{user.email}</p></div>
+          <div>
+            <span className="eyebrow">MEMBER ACCOUNT</span>
+            <h2>{user.name}</h2>
+            <p>{user.email}</p>
+          </div>
           {user.role !== "admin" ? <StatusBadge status={user.verificationStatus} /> : null}
         </div>
         <div className="detail-facts">
@@ -987,47 +1714,148 @@ function MemberDetail({
           <Fact label="Email verified" value={user.isEmailVerified ? "Yes" : "No"} />
           <Fact label="Joined FairBloom" value={formatDate(user.createdAt)} />
           {user.phone ? <Fact label="Phone" value={user.phone} /> : null}
-          {user.farmLocation || user.businessLocation ? <Fact label="Location" value={user.farmLocation || user.businessLocation || "—"} /> : null}
+          {user.farmLocation || user.businessLocation ? (
+            <Fact label="Location" value={user.farmLocation || user.businessLocation || "—"} />
+          ) : null}
           {user.buyerCategory ? <Fact label="Buyer category" value={user.buyerCategory} /> : null}
         </div>
-        {user.verificationNote ? <div className="review-note detail-note"><ShieldX size={16} />{user.verificationNote}</div> : null}
+        {user.verificationNote ? (
+          <div className="review-note detail-note">
+            <ShieldX size={16} />
+            {user.verificationNote}
+          </div>
+        ) : null}
       </section>
       <section className="panel">
-        <div className="panel-heading"><div><span className="eyebrow">ACTIVITY SNAPSHOT</span><h3>Member activity</h3></div></div>
-        <div className="activity-grid"><Fact label="Active listings" value={activity.activeListings} /><Fact label="Transactions" value={transactionCount} />{Object.entries(activity.transactions).map(([key, value]) => <Fact key={key} label={`${capitalize(key)} transactions`} value={value} />)}</div>
+        <div className="panel-heading">
+          <div>
+            <span className="eyebrow">ACTIVITY SNAPSHOT</span>
+            <h3>Member activity</h3>
+          </div>
+        </div>
+        <div className="activity-grid">
+          <Fact label="Active listings" value={activity.activeListings} />
+          <Fact label="Transactions" value={transactionCount} />
+          {Object.entries(activity.transactions).map(([key, value]) => (
+            <Fact key={key} label={`${capitalize(key)} transactions`} value={value} />
+          ))}
+        </div>
       </section>
       {user.role !== "admin" ? (
         <>
           <section className="panel action-panel">
-            <div className="panel-heading"><div><span className="eyebrow">ACCOUNT ACCESS</span><h3>{user.isActive ? "Deactivate account" : "Reactivate account"}</h3></div><span className={`account-state ${user.isActive ? "is-active" : "is-inactive"}`}><i />{user.isActive ? "Active" : "Inactive"}</span></div>
-            <p className="muted">{user.isActive ? "Deactivation cancels this member’s active listings and open deals, and blocks future sign-in." : "Reactivation restores this member’s ability to sign in."}</p>
-            <button className={`button ${user.isActive ? "button-secondary" : "button-primary"}`} disabled={busy} onClick={() => void changeStatus()}>{user.isActive ? <><Ban size={16} /> Deactivate member</> : <><Check size={16} /> Reactivate member</>}</button>
+            <div className="panel-heading">
+              <div>
+                <span className="eyebrow">ACCOUNT ACCESS</span>
+                <h3>{user.isActive ? "Deactivate account" : "Reactivate account"}</h3>
+              </div>
+              <span className={`account-state ${user.isActive ? "is-active" : "is-inactive"}`}>
+                <i />
+                {user.isActive ? "Active" : "Inactive"}
+              </span>
+            </div>
+            <p className="muted">
+              {user.isActive
+                ? "Deactivation cancels this member’s active listings and open deals, and blocks future sign-in."
+                : "Reactivation restores this member’s ability to sign in."}
+            </p>
+            <button
+              className={`button ${user.isActive ? "button-secondary" : "button-primary"}`}
+              disabled={busy}
+              onClick={() => void changeStatus()}
+            >
+              {user.isActive ? (
+                <>
+                  <Ban size={16} /> Deactivate member
+                </>
+              ) : (
+                <>
+                  <Check size={16} /> Reactivate member
+                </>
+              )}
+            </button>
           </section>
           <section className="panel erase-panel">
-            <div className="panel-heading"><div><span className="eyebrow eyebrow-danger">IRREVERSIBLE ACTION</span><h3>Permanently erase account</h3></div></div>
-            <p className="muted">This permanently removes the participant’s personal data. Choose what happens to their transactions, then confirm the account email.</p>
+            <div className="panel-heading">
+              <div>
+                <span className="eyebrow eyebrow-danger">IRREVERSIBLE ACTION</span>
+                <h3>Permanently erase account</h3>
+              </div>
+            </div>
+            <p className="muted">
+              This permanently removes the participant’s personal data. Choose what happens to their
+              transactions, then confirm the account email.
+            </p>
             <form className="erase-form" onSubmit={(event) => void erase(event)}>
-              <label className="field"><span>Transaction handling</span><select value={retention} onChange={(event) => setRetention(event.target.value as typeof retention)}><option value="anonymize">Anonymize and keep in price index</option><option value="delete">Delete transactions</option></select></label>
-              <label className="field"><span>Type <strong>{user.email}</strong> to confirm</span><input type="email" autoComplete="off" value={confirmEmail} onChange={(event) => setConfirmEmail(event.target.value)} placeholder="Member email address" /></label>
-              {error ? <div className="form-error" role="alert">{error}</div> : null}
-              <button className="button button-danger" disabled={busy || confirmEmail !== user.email}><ShieldX size={16} />{busy ? "Erasing…" : "Erase account permanently"}</button>
+              <label className="field">
+                <span>Transaction handling</span>
+                <select
+                  value={retention}
+                  onChange={(event) => setRetention(event.target.value as typeof retention)}
+                >
+                  <option value="anonymize">Anonymize and keep in price index</option>
+                  <option value="delete">Delete transactions</option>
+                </select>
+              </label>
+              <label className="field">
+                <span>
+                  Type <strong>{user.email}</strong> to confirm
+                </span>
+                <input
+                  type="email"
+                  autoComplete="off"
+                  value={confirmEmail}
+                  onChange={(event) => setConfirmEmail(event.target.value)}
+                  placeholder="Member email address"
+                />
+              </label>
+              {error ? (
+                <div className="form-error" role="alert">
+                  {error}
+                </div>
+              ) : null}
+              <button
+                className="button button-danger"
+                disabled={busy || confirmEmail !== user.email}
+              >
+                <ShieldX size={16} />
+                {busy ? "Erasing…" : "Erase account permanently"}
+              </button>
             </form>
           </section>
         </>
-      ) : <div className="info-banner"><ShieldCheck size={18} /><span>Administrator accounts cannot be deactivated or erased here.</span></div>}
+      ) : (
+        <div className="info-banner">
+          <ShieldCheck size={18} />
+          <span>Administrator accounts cannot be deactivated or erased here.</span>
+        </div>
+      )}
     </div>
   );
 }
 
 function Fact({ label, value }: { label: string; value: ReactNode }) {
-  return <div className="fact"><span>{label}</span><strong>{value}</strong></div>;
+  return (
+    <div className="fact">
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
+  );
 }
 
 function MiniTransaction({ transaction }: { transaction: Transaction }) {
   return (
     <div className="mini-transaction">
-      <span className="mini-flower-icon"><Flower2 size={17} /></span>
-      <span className="mini-transaction-copy"><strong>{transaction.flowerVariety}</strong><small>{dealParties(transaction) ?? submitterName(transaction)} · {formatDate(transaction.createdAt)}</small></span>
+      <span className="mini-flower-icon">
+        <Flower2 size={17} />
+      </span>
+      <span className="mini-transaction-copy">
+        <strong>{transaction.flowerVariety}</strong>
+        <small>
+          {dealParties(transaction) ?? submitterName(transaction)} ·{" "}
+          {formatDate(transaction.createdAt)}
+        </small>
+      </span>
       <strong className="mini-price">{formatCurrency(transaction.price)}</strong>
     </div>
   );
@@ -1035,35 +1863,119 @@ function MiniTransaction({ transaction }: { transaction: Transaction }) {
 
 function StatusBadge({ status }: { status: TransactionStatus | VerificationStatus }) {
   const label = status === "pending" ? "Pending" : capitalize(status);
-  return <span className={`status-badge status-${status}`}><i />{label}</span>;
+  return (
+    <span className={`status-badge status-${status}`}>
+      <i />
+      {label}
+    </span>
+  );
 }
 
-function Pagination({ page, pages, total, onChange, pageSize = 20 }: { page: number; pages: number; total: number; pageSize?: number; onChange: (page: number) => void }) {
+function Pagination({
+  page,
+  pages,
+  total,
+  onChange,
+  pageSize = 20,
+}: {
+  page: number;
+  pages: number;
+  total: number;
+  pageSize?: number;
+  onChange: (page: number) => void;
+}) {
   if (total === 0) return null;
   const first = (page - 1) * pageSize + 1;
   const last = Math.min(page * pageSize, total);
   return (
     <div className="pagination">
-      <span>Showing <strong>{first}–{last}</strong> of <strong>{total.toLocaleString()}</strong></span>
-      <div><button className="icon-button" aria-label="Previous page" disabled={page <= 1} onClick={() => onChange(page - 1)}><ArrowLeft size={16} /></button><span>Page {page} of {Math.max(pages, 1)}</span><button className="icon-button" aria-label="Next page" disabled={page >= pages} onClick={() => onChange(page + 1)}><ArrowRight size={16} /></button></div>
+      <span>
+        Showing{" "}
+        <strong>
+          {first}–{last}
+        </strong>{" "}
+        of <strong>{total.toLocaleString()}</strong>
+      </span>
+      <div>
+        <button
+          className="icon-button"
+          aria-label="Previous page"
+          disabled={page <= 1}
+          onClick={() => onChange(page - 1)}
+        >
+          <ArrowLeft size={16} />
+        </button>
+        <span>
+          Page {page} of {Math.max(pages, 1)}
+        </span>
+        <button
+          className="icon-button"
+          aria-label="Next page"
+          disabled={page >= pages}
+          onClick={() => onChange(page + 1)}
+        >
+          <ArrowRight size={16} />
+        </button>
+      </div>
     </div>
   );
 }
 
-function EmptyState({ icon: Icon, title, body }: { icon: typeof Check; title: string; body: string }) {
-  return <div className="empty-state"><span><Icon size={23} /></span><strong>{title}</strong><p>{body}</p></div>;
+function EmptyState({
+  icon: Icon,
+  title,
+  body,
+}: {
+  icon: typeof Check;
+  title: string;
+  body: string;
+}) {
+  return (
+    <div className="empty-state">
+      <span>
+        <Icon size={23} />
+      </span>
+      <strong>{title}</strong>
+      <p>{body}</p>
+    </div>
+  );
 }
 
 function ErrorPanel({ message, onRetry }: { message: string; onRetry: () => void }) {
-  return <div className="error-panel" role="alert"><div><ShieldX size={18} /><span>{message}</span></div><button className="button button-quiet button-sm" onClick={onRetry}><RefreshCw size={14} /> Try again</button></div>;
+  return (
+    <div className="error-panel" role="alert">
+      <div>
+        <ShieldX size={18} />
+        <span>{message}</span>
+      </div>
+      <button className="button button-quiet button-sm" onClick={onRetry}>
+        <RefreshCw size={14} /> Try again
+      </button>
+    </div>
+  );
 }
 
 function LoadingRows({ count }: { count: number }) {
-  return <div className="loading-rows" aria-label="Loading">{Array.from({ length: count }, (_, index) => <div className="skeleton-row" key={index}><span /><span /><span /></div>)}</div>;
+  return (
+    <div className="loading-rows" aria-label="Loading">
+      {Array.from({ length: count }, (_, index) => (
+        <div className="skeleton-row" key={index}>
+          <span />
+          <span />
+          <span />
+        </div>
+      ))}
+    </div>
+  );
 }
 
 function LoadingCard() {
-  return <div className="panel loading-card"><div className="skeleton-image" /><LoadingRows count={2} /></div>;
+  return (
+    <div className="panel loading-card">
+      <div className="skeleton-image" />
+      <LoadingRows count={2} />
+    </div>
+  );
 }
 
 function Modal({
@@ -1078,15 +1990,32 @@ function Modal({
   className?: string;
 }) {
   useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [onClose]);
 
   return (
-    <div className="modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-      <section className={`modal-card ${className}`.trim()} role="dialog" aria-modal="true" aria-labelledby="modal-title">
-        <div className="modal-heading"><h2 id="modal-title">{title}</h2><button className="icon-button" aria-label="Close" onClick={onClose}><X size={18} /></button></div>
+    <div
+      className="modal-backdrop"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <section
+        className={`modal-card ${className}`.trim()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modal-title"
+      >
+        <div className="modal-heading">
+          <h2 id="modal-title">{title}</h2>
+          <button className="icon-button" aria-label="Close" onClick={onClose}>
+            <X size={18} />
+          </button>
+        </div>
         {children}
       </section>
     </div>

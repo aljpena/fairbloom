@@ -73,7 +73,7 @@ export interface AdminNotification {
 export class ApiError extends Error {
   constructor(
     message: string,
-    readonly status: number,
+    readonly status: number
   ) {
     super(message);
     this.name = "ApiError";
@@ -102,7 +102,7 @@ function queryString(params: Record<string, string | number | undefined>) {
 
 async function request<T>(
   path: string,
-  options: { method?: string; body?: unknown; token?: string | null } = {},
+  options: { method?: string; body?: unknown; token?: string | null } = {}
 ): Promise<T> {
   const token = options.token === undefined ? authToken.get() : options.token;
   let response: Response;
@@ -117,13 +117,19 @@ async function request<T>(
       body: options.body === undefined ? undefined : JSON.stringify(options.body),
     });
   } catch {
-    throw new ApiError("Can't connect to the FairBloom server. Check the API URL and your connection.", 0);
+    throw new ApiError(
+      "Can't connect to the FairBloom server. Check the API URL and your connection.",
+      0
+    );
   }
 
   const payload: unknown = await response.json().catch(() => null);
   if (!response.ok) {
     if (response.status === 401 && token) expireSession();
-    throw new ApiError(errorMessage(payload, `Request failed (${response.status})`), response.status);
+    throw new ApiError(
+      errorMessage(payload, `Request failed (${response.status})`),
+      response.status
+    );
   }
   return payload as T;
 }
@@ -133,24 +139,31 @@ function errorMessage(payload: unknown, fallback: string) {
   if (!payload || typeof payload !== "object") return fallback;
   const body = payload as { message?: unknown; errors?: { msg?: unknown }[] };
   if (typeof body.message === "string") return body.message;
-  const first = Array.isArray(body.errors) ? body.errors.find((e) => typeof e?.msg === "string") : undefined;
+  const first = Array.isArray(body.errors)
+    ? body.errors.find((e) => typeof e?.msg === "string")
+    : undefined;
   return typeof first?.msg === "string" ? first.msg : fallback;
 }
 
 export const adminApi = {
   login: (email: string, password: string) =>
-    request<{ token: string; user: Pick<AdminUser, "name" | "email" | "role"> & { id?: string } }>("/auth/login", {
-      method: "POST",
-      body: { email, password },
-      token: null,
-    }),
+    request<{ token: string; user: Pick<AdminUser, "name" | "email" | "role"> & { id?: string } }>(
+      "/auth/login",
+      {
+        method: "POST",
+        body: { email, password },
+        token: null,
+      }
+    ),
 
   me: () => request<{ user: AdminUser }>("/auth/me"),
 
   dashboard: async () => {
     const [transactions, verifications, users] = await Promise.all([
       request<{ transactions: Transaction[] }>("/transactions/pending"),
-      request<{ users: VerificationUser[]; pagination: Pagination }>("/admin/verifications?status=pending&limit=1"),
+      request<{ users: VerificationUser[]; pagination: Pagination }>(
+        "/admin/verifications?status=pending&limit=1"
+      ),
       request<{ users: AdminUser[]; pagination: Pagination }>("/admin/users?limit=1"),
     ]);
     return {
@@ -160,12 +173,11 @@ export const adminApi = {
     };
   },
 
-  pendingTransactions: () =>
-    request<{ transactions: Transaction[] }>("/transactions/pending"),
+  pendingTransactions: () => request<{ transactions: Transaction[] }>("/transactions/pending"),
 
   transactions: (page: number, flowerVariety: string) =>
     request<{ transactions: Transaction[]; pagination: Pagination }>(
-      `/transactions${queryString({ page, limit: 30, flowerVariety: flowerVariety || undefined })}`,
+      `/transactions${queryString({ page, limit: 30, flowerVariety: flowerVariety || undefined })}`
     ),
 
   reviewTransaction: (id: string, decision: "approve" | "reject") =>
@@ -176,7 +188,7 @@ export const adminApi = {
 
   verifications: (status: VerificationStatus, page: number) =>
     request<{ users: VerificationUser[]; pagination: Pagination }>(
-      `/admin/verifications${queryString({ status, page, limit: 20 })}`,
+      `/admin/verifications${queryString({ status, page, limit: 20 })}`
     ),
 
   reviewVerification: (id: string, decision: "approve" | "reject", reason?: string) =>
@@ -185,7 +197,13 @@ export const adminApi = {
       body: { decision, reason },
     }),
 
-  users: (filters: { search: string; role: string; status: string; verified: string; page: number }) =>
+  users: (filters: {
+    search: string;
+    role: string;
+    status: string;
+    verified: string;
+    page: number;
+  }) =>
     request<{ users: AdminUser[]; pagination: Pagination }>(
       `/admin/users${queryString({
         ...filters,
@@ -194,11 +212,10 @@ export const adminApi = {
         status: filters.status || undefined,
         verified: filters.verified || undefined,
         limit: 20,
-      })}`,
+      })}`
     ),
 
-  user: (id: string) =>
-    request<{ user: AdminUser; activity: UserActivity }>(`/admin/users/${id}`),
+  user: (id: string) => request<{ user: AdminUser; activity: UserActivity }>(`/admin/users/${id}`),
 
   /** Deactivating also cancels the member's active listings and open deals (reported in `cleanup`). */
   setUserStatus: (id: string, isActive: boolean) =>
@@ -213,7 +230,7 @@ export const adminApi = {
 
   notifications: () =>
     request<{ notifications: AdminNotification[]; unreadCount: number; pagination: Pagination }>(
-      "/notifications?limit=20",
+      "/notifications?limit=20"
     ),
 
   unreadNotifications: () => request<{ unreadCount: number }>("/notifications/unread-count"),
@@ -221,7 +238,8 @@ export const adminApi = {
   markNotificationRead: (id: string) =>
     request<{ notification: AdminNotification }>(`/notifications/${id}/read`, { method: "PATCH" }),
 
-  markAllNotificationsRead: () => request<{ updated: number }>("/notifications/read-all", { method: "PATCH" }),
+  markAllNotificationsRead: () =>
+    request<{ updated: number }>("/notifications/read-all", { method: "PATCH" }),
 
   eraseUser: (id: string, confirmEmail: string, transactions: "anonymize" | "delete") =>
     request<{ message: string }>(`/admin/users/${id}/erase`, {
@@ -259,7 +277,10 @@ export const adminApi = {
     if (!response.ok) {
       const payload: unknown = await response.json().catch(() => null);
       if (response.status === 401 && token) expireSession();
-      throw new ApiError(errorMessage(payload, `Backup failed (${response.status})`), response.status);
+      throw new ApiError(
+        errorMessage(payload, `Backup failed (${response.status})`),
+        response.status
+      );
     }
 
     const blob = await response.blob();
@@ -270,7 +291,9 @@ export const adminApi = {
 };
 
 export function formatDate(value: string) {
-  return new Intl.DateTimeFormat("en-PH", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
+  return new Intl.DateTimeFormat("en-PH", { dateStyle: "medium", timeStyle: "short" }).format(
+    new Date(value)
+  );
 }
 
 export function formatCurrency(value: number) {
@@ -281,10 +304,12 @@ export function formatNumber(value: number) {
   return new Intl.NumberFormat("en-PH", { maximumFractionDigits: 2 }).format(value);
 }
 
-const nameOf = (party: Transaction["farmer"]) => (party && typeof party === "object" ? party.name : null);
+const nameOf = (party: Transaction["farmer"]) =>
+  party && typeof party === "object" ? party.name : null;
 
 export function submitterName(transaction: Transaction) {
-  if (transaction.submittedBy && typeof transaction.submittedBy === "object") return transaction.submittedBy.name;
+  if (transaction.submittedBy && typeof transaction.submittedBy === "object")
+    return transaction.submittedBy.name;
   return nameOf(transaction.farmer) ?? nameOf(transaction.buyer) ?? "Unknown member";
 }
 
