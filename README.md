@@ -22,19 +22,34 @@ The application does not modify or add backend endpoints.
 
 ## Scripts
 
-| Script                 | What it does                                 |
-| ---------------------- | -------------------------------------------- |
-| `npm run dev`          | Start the Vite dev server                    |
-| `npm run build`        | Type-check and build static files to `dist/` |
-| `npm run preview`      | Serve the built `dist/` locally              |
-| `npm run typecheck`    | Type-check only                              |
-| `npm run lint`         | Check code with ESLint                       |
-| `npm run lint:fix`     | Auto-fix ESLint problems                     |
-| `npm run format`       | Format code with Prettier                    |
-| `npm run format:check` | Check formatting without changing files      |
+| Script                 | What it does                                        |
+| ---------------------- | --------------------------------------------------- |
+| `npm run dev`          | Start the Vite dev server                           |
+| `npm run build`        | Type-check and build static files to `dist/`        |
+| `npm run preview`      | Serve the built `dist/` locally                     |
+| `npm start`            | Serve the built `dist/` in production (uses `PORT`) |
+| `npm run typecheck`    | Type-check only                                     |
+| `npm run lint`         | Check code with ESLint                              |
+| `npm run lint:fix`     | Auto-fix ESLint problems                            |
+| `npm run format`       | Format code with Prettier                           |
+| `npm run format:check` | Check formatting without changing files             |
 
 ## Deploying
 
-The output of `npm run build` is a static site in `dist/`. Any static host works (Vercel, Netlify, Cloudflare Pages, Nginx).
-Use build command `npm run build` and output directory `dist`. `VITE_API_URL` is baked in at build time, so set it
-in the host's build environment.
+`VITE_API_URL` is baked in at build time. Set it in the host's environment, e.g.
+`VITE_API_URL=https://api-fairbloom.onrender.com/api`, and redeploy whenever it changes. Also add the
+admin site's URL to the backend's `CLIENT_ORIGIN`.
+
+### Render: Static Site (recommended, free, no server to sleep)
+
+- Build Command: `npm install && npm run build`
+- Publish Directory: `dist`
+
+### Render: Web Service
+
+- Build Command: `npm install && npm run build`
+- Start Command: `npm start` (serves `dist/` on the `PORT` Render provides)
+
+### Vercel / Netlify
+
+- Build Command: `npm run build`, Output Directory: `dist`
